@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circle of Fifths (Linear)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .key-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .key-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .chord-item {
+            transition: all 0.2s ease;
+        }
+        .chord-item:hover {
+            transform: translateY(-1px);
+            background-color: #f8fafc;
+        }
+        .scale-degree {
+            transition: all 0.2s ease;
+        }
+        .scale-degree:hover {
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 text-slate-800 p-8">
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-5xl font-bold text-center mb-4 text-transparent bg-clip-text bg-gradient-to-r from-slate-700 to-slate-900">
+            Circle of Fifths (Linear)
+        </h1>
+        <p class="text-center text-slate-600 mb-12 text-lg">
+            Click on any key to see its relative key and chords
+        </p>
+
+        <!-- Major Keys Row -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-semibold text-center mb-6 text-slate-700">Major Keys</h2>
+            <div class="flex flex-wrap justify-center gap-3" id="majorKeys">
+                <!-- Will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Minor Keys Row -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-semibold text-center mb-6 text-slate-700">Minor Keys</h2>
+            <div class="flex flex-wrap justify-center gap-3" id="minorKeys">
+                <!-- Will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Information Panel -->
+        <div id="infoPanel" class="hidden">
+            <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-lg">
+                <div class="text-center mb-6">
+                    <h3 id="selectedKeyName" class="text-3xl font-bold mb-2 text-slate-800"></h3>
+                    <div class="w-24 h-1 bg-gradient-to-r from-blue-400 to-teal-400 mx-auto rounded-full"></div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- Relative Key -->
+                    <div class="text-center">
+                        <h4 class="text-xl font-semibold text-slate-600 mb-4">Relative Key</h4>
+                        <div class="bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl p-6 shadow-sm border border-slate-100">
+                            <p id="relativeKey" class="text-2xl font-bold text-slate-800"></p>
+                            <p id="relativeKeyType" class="text-sm text-slate-500 mt-2"></p>
+                        </div>
+                    </div>
+
+                    <!-- Chords in Key -->
+                    <div>
+                        <h4 class="text-xl font-semibold text-slate-600 mb-4 text-center">Chords in Key</h4>
+                        <div id="chordsContainer" class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scale Degrees -->
+                <div class="mt-8 text-center">
+                    <h4 class="text-xl font-semibold text-slate-600 mb-4">Scale Degrees</h4>
+                    <div id="scaleDegrees" class="flex justify-center gap-6 flex-wrap">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div id="instructions" class="text-center mt-12 bg-slate-50 rounded-2xl p-8 border border-slate-200">
+            <p class="text-xl text-slate-600">
+                Click on any key above to see detailed information
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Data
+        const majorKeys = ["C", "G", "D", "A", "E", "B", "F#/Gb", "Db", "Ab", "Eb", "Bb", "F"];
+        const minorKeys = ["Am", "Em", "Bm", "F#m", "C#m", "G#m", "D#m/Ebm", "Bbm", "Fm", "Cm", "Gm", "Dm"];
+        
+        const relativeKeys = {
+            "C": "Am", "G": "Em", "D": "Bm", "A": "F#m", "E": "C#m", "B": "G#m", 
+            "F#/Gb": "D#m/Ebm", "Db": "Bbm", "Ab": "Fm", "Eb": "Cm", "Bb": "Gm", "F": "Dm"
+        };
+        
+        const chordsInKey = {
+            "C": ["C", "Dm", "Em", "F", "G", "Am", "Bdim"],
+            "G": ["G", "Am", "Bm", "C", "D", "Em", "F#dim"],
+            "D": ["D", "Em", "F#m", "G", "A", "Bm", "C#dim"],
+            "A": ["A", "Bm", "C#m", "D", "E", "F#m", "G#dim"],
+            "E": ["E", "F#m", "G#m", "A", "B", "C#m", "D#dim"],
+            "B": ["B", "C#m", "D#m", "E", "F#", "G#m", "A#dim"],
+            "F#/Gb": ["F#", "G#m", "A#m", "B", "C#", "D#m", "E#dim"],
+            "Db": ["Db", "Ebm", "Fm", "Gb", "Ab", "Bbm", "Cdim"],
+            "Ab": ["Ab", "Bbm", "Cm", "Db", "Eb", "Fm", "Gdim"],
+            "Eb": ["Eb", "Fm", "Gm", "Ab", "Bb", "Cm", "Ddim"],
+            "Bb": ["Bb", "Cm", "Dm", "Eb", "F", "Gm", "Adim"],
+            "F": ["F", "Gm", "Am", "Bb", "C", "Dm", "Edim"]
+        };
+
+        const minorChordsInKey = {
+            "Am": ["Am", "Bdim", "C", "Dm", "Em", "F", "G"],
+            "Em": ["Em", "F#dim", "G", "Am", "Bm", "C", "D"],
+            "Bm": ["Bm", "C#dim", "D", "Em", "F#m", "G", "A"],
+            "F#m": ["F#m", "G#dim", "A", "Bm", "C#m", "D", "E"],
+            "C#m": ["C#m", "D#dim", "E", "F#m", "G#m", "A", "B"],
+            "G#m": ["G#m", "A#dim", "B", "C#m", "D#m", "E", "F#"],
+            "D#m/Ebm": ["D#m", "E#dim", "F#", "G#m", "A#m", "B", "C#"],
+            "Bbm": ["Bbm", "Cdim", "Db", "Ebm", "Fm", "Gb", "Ab"],
+            "Fm": ["Fm", "Gdim", "Ab", "Bbm", "Cm", "Db", "Eb"],
+            "Cm": ["Cm", "Ddim", "Eb", "Fm", "Gm", "Ab", "Bb"],
+            "Gm": ["Gm", "Adim", "Bb", "Cm", "Dm", "Eb", "F"],
+            "Dm": ["Dm", "Edim", "F", "Gm", "Am", "Bb", "C"]
+        };
+
+        const scaleDegrees = ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°'];
+
+        // DOM Elements
+        const majorKeysContainer = document.getElementById('majorKeys');
+        const minorKeysContainer = document.getElementById('minorKeys');
+        const infoPanel = document.getElementById('infoPanel');
+        const instructions = document.getElementById('instructions');
+        const selectedKeyName = document.getElementById('selectedKeyName');
+        const relativeKey = document.getElementById('relativeKey');
+        const relativeKeyType = document.getElementById('relativeKeyType');
+        const chordsContainer = document.getElementById('chordsContainer');
+        const scaleDegreesContainer = document.getElementById('scaleDegrees');
+
+        // State
+        let selectedKey = null;
+        let isMajor = true;
+
+        // Initialize the UI
+        function initializeUI() {
+            // Create major keys buttons
+            majorKeys.forEach(key => {
+                const button = document.createElement('button');
+                button.textContent = key;
+                button.className = 'key-btn px-6 py-3 rounded-full text-lg font-medium bg-white hover:bg-blue-50 text-slate-700 border border-slate-200 hover:border-blue-200 shadow-md';
+                button.onclick = () => handleKeyClick(key, true);
+                majorKeysContainer.appendChild(button);
+            });
+
+            // Create minor keys buttons
+            minorKeys.forEach(key => {
+                const button = document.createElement('button');
+                button.textContent = key;
+                button.className = 'key-btn px-6 py-3 rounded-full text-lg font-medium bg-white hover:bg-teal-50 text-slate-700 border border-slate-200 hover:border-teal-200 shadow-md';
+                button.onclick = () => handleKeyClick(key, false);
+                minorKeysContainer.appendChild(button);
+            });
+        }
+
+        // Handle key click
+        function handleKeyClick(key, isMajorKey) {
+            selectedKey = key;
+            isMajor = isMajorKey;
+            
+            // Update UI
+            updateUI();
+            
+            // Show info panel, hide instructions
+            infoPanel.classList.remove('hidden');
+            instructions.classList.add('hidden');
+            
+            // Update button styles
+            updateButtonStyles();
+        }
+
+        // Update UI with selected key information
+        function updateUI() {
+            // Update selected key name
+            selectedKeyName.textContent = `${selectedKey} ${isMajor ? 'Major' : 'Minor'}`;
+            
+            // Update relative key
+            const relative = getRelativeKey();
+            relativeKey.textContent = relative;
+            relativeKeyType.textContent = isMajor ? 'Relative Minor' : 'Relative Major';
+            
+            // Update chords
+            updateChords();
+            
+            // Update scale degrees
+            updateScaleDegrees();
+        }
+
+        // Get relative key
+        function getRelativeKey() {
+            if (!selectedKey) return null;
+            if (isMajor) {
+                return relativeKeys[selectedKey];
+            } else {
+                // Find the major key that has this minor key as relative
+                for (const [major, minor] of Object.entries(relativeKeys)) {
+                    if (minor === selectedKey) {
+                        return major;
+                    }
+                }
+                return null;
+            }
+        }
+
+        // Update chords display
+        function updateChords() {
+            chordsContainer.innerHTML = '';
+            const chords = isMajor ? chordsInKey[selectedKey] || [] : minorChordsInKey[selectedKey] || [];
+            
+            chords.forEach(chord => {
+                const div = document.createElement('div');
+                div.className = 'chord-item bg-slate-50 rounded-lg p-3 text-center border border-slate-200';
+                div.textContent = chord;
+                chordsContainer.appendChild(div);
+            });
+        }
+
+        // Update scale degrees display
+        function updateScaleDegrees() {
+            scaleDegreesContainer.innerHTML = '';
+            const chords = isMajor ? chordsInKey[selectedKey] || [] : minorChordsInKey[selectedKey] || [];
+            
+            scaleDegrees.forEach((degree, index) => {
+                const div = document.createElement('div');
+                div.className = 'scale-degree text-center';
+                
+                const degreeDiv = document.createElement('div');
+                degreeDiv.className = 'w-12 h-12 bg-gradient-to-r from-orange-100 to-amber-100 rounded-full flex items-center justify-center text-orange-700 font-bold text-sm mb-2 shadow-sm border border-orange-200';
+                degreeDiv.textContent = degree;
+                
+                const chordSpan = document.createElement('span');
+                chordSpan.className = 'text-xs text-slate-500';
+                chordSpan.textContent = chords[index];
+                
+                div.appendChild(degreeDiv);
+                div.appendChild(chordSpan);
+                scaleDegreesContainer.appendChild(div);
+            });
+        }
+
+        // Update button styles to show selection
+        function updateButtonStyles() {
+            // Reset all buttons
+            document.querySelectorAll('.key-btn').forEach(btn => {
+                const key = btn.textContent;
+                if (majorKeys.includes(key)) {
+                    btn.className = 'key-btn px-6 py-3 rounded-full text-lg font-medium bg-white hover:bg-blue-50 text-slate-700 border border-slate-200 hover:border-blue-200 shadow-md';
+                } else {
+                    btn.className = 'key-btn px-6 py-3 rounded-full text-lg font-medium bg-white hover:bg-teal-50 text-slate-700 border border-slate-200 hover:border-teal-200 shadow-md';
+                }
+            });
+            
+            // Highlight selected button
+            if (selectedKey) {
+                const allButtons = document.querySelectorAll('.key-btn');
+                allButtons.forEach(btn => {
+                    if (btn.textContent === selectedKey) {
+                        if (isMajor) {
+                            btn.className = 'key-btn px-6 py-3 rounded-full text-lg font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md';
+                        } else {
+                            btn.className = 'key-btn px-6 py-3 rounded-full text-lg font-medium bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-md';
+                        }
+                    }
+                });
+            }
+        }
+
+        // Initialize on load
+        window.onload = initializeUI;
+    </script>
+</body>
+</html>
