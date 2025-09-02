@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Color Picker Pro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 20px;
+      color: #495057;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      padding: 30px;
+    }
+    h1 {
+      text-align: center;
+      color: #343a40;
+      font-weight: 600;
+      font-size: 1.8em;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #6c757d;
+      font-size: 0.95em;
+      margin-bottom: 30px;
+    }
+
+    .picker-section {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    input[type="color"] {
+      width: 70px;
+      height: 70px;
+      border: 3px solid #e9ecef;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    .color-display {
+      margin-top: 15px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .hex-value {
+      font-family: 'Courier New', monospace;
+      font-size: 1.3em;
+      font-weight: 600;
+      color: #212529;
+      letter-spacing: 1px;
+    }
+
+    .actions {
+      text-align: center;
+      margin: 25px 0;
+    }
+    button {
+      padding: 10px 16px;
+      margin: 0 8px;
+      font-size: 0.9em;
+      font-weight: 500;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      background: white;
+      color: #495057;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    button:hover {
+      background: #f8f9fa;
+      border-color: #ced4da;
+      transform: translateY(-1px);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+
+    /* Flat Icons */
+    .icon-save svg { width: 16px; height: 16px; }
+    .icon-download svg { width: 16px; height: 16px; }
+    .icon-delete svg { width: 14px; height: 14px; }
+    .icon-drag svg { width: 16px; height: 16px; opacity: 0.4; }
+
+    .schemes {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+      margin-top: 25px;
+    }
+    .scheme {
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #e9ecef;
+    }
+    .scheme-header {
+      background: #f1f3f5;
+      padding: 10px 12px;
+      margin: 0;
+      font-size: 0.9em;
+      font-weight: 500;
+      color: #495057;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .colors {
+      display: flex;
+      flex-direction: column;
+    }
+    .color-item {
+      padding: 14px 10px;
+      text-align: center;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85em;
+      cursor: copy;
+      user-select: none;
+      transition: background 0.15s;
+    }
+    .color-item:hover {
+      background: #f8f9fa;
+    }
+
+    .favorites {
+      margin-top: 50px;
+    }
+    .favorites h2 {
+      text-align: center;
+      color: #343a40;
+      font-weight: 500;
+      font-size: 1.3em;
+      border-bottom: 1px solid #e9ecef;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+    .fav-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .fav-item {
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: move;
+    }
+    .fav-colors {
+      display: flex;
+      height: 40px;
+    }
+    .fav-color {
+      flex: 1;
+    }
+    .fav-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      background: #f8f9fa;
+      font-size: 0.85em;
+      color: #6c757d;
+    }
+    .fav-name {
+      font-weight: 500;
+      color: #495057;
+    }
+
+    .copy-msg {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #374151;
+      color: white;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 0.9em;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    /* === Template Preset Styles === */
+    .template-classic {
+      background: white;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    }
+    .template-classic #templateContent {
+      border: 1px solid #e9ecef;
+      border-radius: 12px;
+      padding: 40px;
+    }
+
+    .template-modern {
+      background: linear-gradient(135deg, #f0f7ff 0%, #e6f3ff 100%);
+      box-shadow: 0 12px 36px rgba(100, 149, 237, 0.2);
+      border-radius: 16px;
+    }
+    .template-modern #templateTitle {
+      background: linear-gradient(90deg, #3498db, #2980b9);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .template-modern .color-block {
+      border-radius: 12px !important;
+      box-shadow: 0 4px 12px rgba(52, 152, 219, 0.15);
+    }
+
+    .template-grid {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    }
+    .template-grid #templateColors {
+      display: grid !important;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    .template-grid .color-block-container {
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      padding: 12px;
+      background: #f8f9fa;
+    }
+
+    .template-circular {
+      background: #fafafa;
+      padding: 50px 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+    }
+    .template-circular .color-block {
+      border-radius: 50% !important;
+      overflow: hidden;
+      border: 3px solid white;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .template-circular .color-block-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .template-circular strong {
+      color: #495057;
+      margin-bottom: 16px;
+    }
+
+    /* ใช้ร่วมกันทุกเทมเพลต */
+    .color-block {
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65em;
+      font-weight: bold;
+      color: white;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+      transition: transform 0.2s;
+    }
+    .color-block:hover {
+      transform: scale(1.05);
+    }
+
+    /* === Custom Dropdown === */
+    .custom-dropdown {
+      position: relative;
+      display: inline-block;
+      width: 180px;
+      font-size: 0.9em;
+    }
+
+    .dropdown-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      background: white;
+      color: #495057;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .dropdown-header:hover {
+      border-color: #adb5bd;
+      background: #f8f9fa;
+    }
+
+    .dropdown-header:focus,
+    .custom-dropdown.active .dropdown-header {
+      border-color: #3498db;
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+      outline: none;
+    }
+
+    .dropdown-arrow {
+      transition: transform 0.2s ease;
+    }
+
+    .custom-dropdown.active .dropdown-arrow {
+      transform: rotate(180deg);
+    }
+
+    .dropdown-list {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      list-style: none;
+      margin: 4px 0 0 0;
+      padding: 0;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, opacity 0.2s ease;
+      opacity: 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      z-index: 10;
+    }
+
+    .custom-dropdown.active .dropdown-list {
+      max-height: 200px;
+      opacity: 1;
+      overflow-y: auto;
+    }
+
+    .dropdown-list li {
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+      color: #495057;
+    }
+
+    .dropdown-list li:hover {
+      background: #f1f3f5;
+      color: #343a40;
+    }
+
+    .dropdown-list li:active {
+      background: #e9ecef;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Color Picker Pro</h1>
+    <p class="subtitle">ค้นพบชุดสีที่เข้ากันได้อย่างลงตัว</p>
+
+    <div class="picker-section">
+      <input type="color" id="mainColor" value="#3498db" />
+      <div class="color-display">
+        <span class="hex-value" id="hexValue">#3498db</span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="icon-save" id="saveBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+          <line x1="7" y1="3" x2="7" y2="7"/>
+          <line x1="17" y1="3" x2="17" y2="7"/>
+        </svg>
+        บันทึก
+      </button>
+      <button class="icon-download" id="downloadBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        ชุดปัจจุบัน
+      </button>
+    </div>
+
+    <div class="schemes" id="schemes">
+      <!-- จะถูกเติมโดย JavaScript -->
+    </div>
+
+    <div class="favorites">
+      <h2>ชุดสีโปรด</h2>
+
+      <div class="actions">
+        <!-- Custom Dropdown แทน <select> -->
+        <div class="template-selector" style="margin: 15px 0; text-align: center; font-size: 0.9em; color: #6c757d;">
+          เลือกเทมเพลต:
+          <div class="custom-dropdown" id="templateDropdown">
+            <div class="dropdown-header">
+              <span class="dropdown-selected">Classic</span>
+              <svg class="dropdown-arrow" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2">
+                <polyline points="6,9 12,15 18,9"></polyline>
+              </svg>
+            </div>
+            <ul class="dropdown-list">
+              <li data-value="classic">Classic</li>
+              <li data-value="modern">Modern</li>
+              <li data-value="grid">Grid</li>
+              <li data-value="circular">Circular</li>
+            </ul>
+          </div>
+        </div>
+
+        <button class="icon-download" id="downloadFavBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          ดาวน์โหลดทั้งหมด
+        </button> 
+      </div>
+
+      <div class="fav-list" id="favList">
+        <!-- เติมโดย JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <!-- เทมเพลตสำหรับดาวน์โหลด PNG -->
+  <div id="downloadTemplate" style="position: fixed; top: -9999px; font-family: 'Inter', sans-serif; width: 800px; padding: 40px;">
+    <div id="templateContent">
+      <div style="text-align: center; margin-bottom: 30px;">
+        <h2 id="templateTitle" style="color: #343a40; margin: 0; font-weight: 600; font-size: 1.8em;">Color Picker Pro</h2>
+        <p style="color: #6c757d; font-size: 0.9em; margin-top: 8px;" id="templateDate"></p>
+      </div>
+      <div id="templateColors" style="margin: 20px 0;"></div>
+      <hr style="border: 1px dashed #e9ecef; margin: 20px 0;" />
+      <p style="text-align: center; color: #adb5bd; font-size: 0.8em;">Generated by Color Picker Pro • https://colorpicker.pro</p>
+    </div>
+  </div>
+
+  <div class="copy-msg" id="copyMsg">คัดลอกแล้ว</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script>
+    const mainColorInput = document.getElementById("mainColor");
+    const hexValue = document.getElementById("hexValue");
+    const schemesContainer = document.getElementById("schemes");
+    const saveBtn = document.getElementById("saveBtn");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const downloadFavBtn = document.getElementById("downloadFavBtn");
+    const favList = document.getElementById("favList");
+    const copyMsg = document.getElementById("copyMsg");
+    const downloadTemplate = document.getElementById("downloadTemplate");
+    const templateColors = document.getElementById("templateColors");
+    const templateDate = document.getElementById("templateDate");
+
+    let favorites = JSON.parse(localStorage.getItem("colorFavorites")) || [];
+
+    // === Custom Dropdown ===
+    const dropdown = document.getElementById('templateDropdown');
+    const dropdownSelected = dropdown.querySelector('.dropdown-selected');
+    const dropdownList = dropdown.querySelector('.dropdown-list');
+    const dropdownOptions = dropdown.querySelectorAll('.dropdown-list li');
+
+    let currentTemplate = 'classic'; // ค่าเริ่มต้น
+
+    dropdown.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdown.classList.toggle('active');
+    });
+
+    dropdownOptions.forEach(option => {
+      option.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const value = option.getAttribute('data-value');
+        const label = option.textContent;
+        dropdownSelected.textContent = label;
+        currentTemplate = value;
+        applyTemplateStyle(value);
+        dropdown.classList.remove('active');
+      });
+    });
+
+    document.addEventListener('click', () => {
+      dropdown.classList.remove('active');
+    });
+
+    // === ฟังก์ชันแปลงสี ===
+    function hexToRgb(hex) {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return { r, g, b };
+    }
+
+    function rgbToHex(r, g, b) {
+      return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+    }
+
+    function hexToHSL(hex) {
+      let { r, g, b } = hexToRgb(hex);
+      r /= 255; g /= 255; b /= 255;
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      let h, s, l = (max + min) / 2;
+
+      if (max === min) {
+        h = s = 0;
+      } else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+      }
+      return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
+    }
+
+    function hslToRgb(h, s, l) {
+      h /= 360; s /= 100; l /= 100;
+      let r, g, b;
+
+      if (s === 0) {
+        r = g = b = l;
+      } else {
+        const hue2rgb = (p, q, t) => {
+          if (t < 0) t += 1;
+          if (t > 1) t -= 1;
+          if (t < 1/6) return p + (q - p) * 6 * t;
+          if (t < 1/2) return q;
+          if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+          return p;
+        };
+
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1/3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1/3);
+      }
+
+      return { r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255) };
+    }
+
+    function getComplementary(hex) {
+      const { h, s, l } = hexToHSL(hex);
+      const h2 = (h + 180) % 360;
+      const rgb = hslToRgb(h2, s, l);
+      return rgbToHex(rgb.r, rgb.g, rgb.b);
+    }
+
+    function getAnalogous(hex) {
+      const { h, s, l } = hexToHSL(hex);
+      const h1 = (h + 30) % 360;
+      const h2 = (h - 30 + 360) % 360;
+      const rgb1 = hslToRgb(h1, s, l);
+      const rgb2 = hslToRgb(h2, s, l);
+      return [rgbToHex(rgb1.r, rgb1.g, rgb1.b), rgbToHex(rgb2.r, rgb2.g, rgb2.b)];
+    }
+
+    function getTriadic(hex) {
+      const { h, s, l } = hexToHSL(hex);
+      const h1 = (h + 120) % 360;
+      const h2 = (h + 240) % 360;
+      const rgb1 = hslToRgb(h1, s, l);
+      const rgb2 = hslToRgb(h2, s, l);
+      return [rgbToHex(rgb1.r, rgb1.g, rgb1.b), rgbToHex(rgb2.r, rgb2.g, rgb2.b)];
+    }
+
+    function getMonochromatic(hex) {
+      const { h, s } = hexToHSL(hex);
+      const lightnessLevels = [10, 30, 50, 70, 90];
+      return lightnessLevels.map(l => {
+        const rgb = hslToRgb(h, s, l);
+        return rgbToHex(rgb.r, rgb.g, rgb.b);
+      });
+    }
+
+    function updateSchemes() {
+      const baseColor = mainColorInput.value;
+      hexValue.textContent = baseColor.toUpperCase();
+
+      const complementary = getComplementary(baseColor);
+      const analogous = getAnalogous(baseColor);
+      const triadic = getTriadic(baseColor);
+      const mono = getMonochromatic(baseColor);
+
+      schemesContainer.innerHTML = `
+        <div class="scheme" id="comp-scheme">
+          <div class="scheme-header">
+            <span>Complementary</span>
+            <button class="icon-download" data-id="comp-scheme" style="padding:4px 8px;font-size:0.8em;">
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </button>
+          </div>
+          <div class="colors">
+            <div class="color-item" style="background:${baseColor}; color:white;" data-color="${baseColor}">${baseColor}</div>
+            <div class="color-item" style="background:${complementary}; color:white;" data-color="${complementary}">${complementary}</div>
+          </div>
+        </div>
+
+        <div class="scheme" id="analog-scheme">
+          <div class="scheme-header">
+            <span>Analogous</span>
+            <button class="icon-download" data-id="analog-scheme" style="padding:4px 8px;font-size:0.8em;">
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </button>
+          </div>
+          <div class="colors">
+            <div class="color-item" style="background:${analogous[0]}; color:white;" data-color="${analogous[0]}">${analogous[0]}</div>
+            <div class="color-item" style="background:${baseColor}; color:white;" data-color="${baseColor}">${baseColor}</div>
+            <div class="color-item" style="background:${analogous[1]}; color:white;" data-color="${analogous[1]}">${analogous[1]}</div>
+          </div>
+        </div>
+
+        <div class="scheme" id="triadic-scheme">
+          <div class="scheme-header">
+            <span>Triadic</span>
+            <button class="icon-download" data-id="triadic-scheme" style="padding:4px 8px;font-size:0.8em;">
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </button>
+          </div>
+          <div class="colors">
+            <div class="color-item" style="background:${baseColor}; color:white;" data-color="${baseColor}">${baseColor}</div>
+            <div class="color-item" style="background:${triadic[0]}; color:white;" data-color="${triadic[0]}">${triadic[0]}</div>
+            <div class="color-item" style="background:${triadic[1]}; color:white;" data-color="${triadic[1]}">${triadic[1]}</div>
+          </div>
+        </div>
+
+        <div class="scheme" id="mono-scheme">
+          <div class="scheme-header">
+            <span>Monochromatic</span>
+            <button class="icon-download" data-id="mono-scheme" style="padding:4px 8px;font-size:0.8em;">
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </button>
+          </div>
+          <div class="colors">
+            ${mono.map(color => `
+              <div class="color-item" style="background:${color}; color:${parseInt(color.slice(1,3), 16) < 130 ? 'white' : 'black'};" data-color="${color}">${color}</div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+      attachCopyListeners();
+      attachDownloadSchemeButtons();
+    }
+
+    function attachCopyListeners() {
+      document.querySelectorAll('.color-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const color = item.getAttribute('data-color');
+          navigator.clipboard.writeText(color).then(() => {
+            copyMsg.style.opacity = 1;
+            setTimeout(() => copyMsg.style.opacity = 0, 1500);
+          });
+        });
+      });
+    }
+
+    function attachDownloadSchemeButtons() {
+      document.querySelectorAll('[data-id]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const schemeId = e.target.closest('[data-id]').getAttribute('data-id');
+          const schemeElement = document.getElementById(schemeId);
+          const title = schemeElement.querySelector('.scheme-header span').textContent;
+          fillTemplateAndDownload([schemeElement], `Color Scheme - ${title}`);
+        });
+      });
+    }
+
+    saveBtn.addEventListener('click', () => {
+      const base = mainColorInput.value;
+      const name = `ชุดสี ${favorites.length + 1}`;
+      const scheme = {
+        id: Date.now(),
+        name,
+        base,
+        comp: getComplementary(base),
+        analog: getAnalogous(base),
+        triadic: getTriadic(base),
+        mono: getMonochromatic(base)
+      };
+      favorites.unshift(scheme);
+      if (favorites.length > 10) favorites.pop();
+      localStorage.setItem("colorFavorites", JSON.stringify(favorites));
+      renderFavorites();
+    });
+
+    function renderFavorites() {
+      favList.innerHTML = favorites.length === 0 
+        ? '<p style="grid-column:1/-1; text-align:center; color:#adb5bd; font-size:0.95em;">ยังไม่มีชุดสีโปรด</p>'
+        : '';
+
+      favorites.forEach(fav => {
+        const div = document.createElement('div');
+        div.className = 'fav-item';
+        div.setAttribute('draggable', 'true');
+        div.setAttribute('data-id', fav.id);
+        div.innerHTML = `
+          <div class="fav-colors">
+            <div class="fav-color" style="background:${fav.base}"></div>
+            <div class="fav-color" style="background:${fav.comp}"></div>
+            <div class="fav-color" style="background:${fav.analog[0]}"></div>
+            <div class="fav-color" style="background:${fav.analog[1]}"></div>
+          </div>
+          <div class="fav-footer">
+            <span class="fav-name">${fav.name}</span>
+            <span>
+              <button class="icon-download fav-download-btn" data-fav-id="${fav.id}" style="padding:2px 6px;margin-left:8px;">
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+              </button>
+              <span class="icon-delete fav-delete" data-id="${fav.id}" style="margin-left:8px;cursor:pointer;">
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </span>
+            </span>
+          </div>
+        `;
+        favList.appendChild(div);
+      });
+
+      setupDragAndDrop();
+      attachDeleteListeners();
+    }
+
+    let draggedItem = null;
+    function setupDragAndDrop() {
+      const items = document.querySelectorAll('.fav-item');
+      items.forEach(item => {
+        item.addEventListener('dragstart', () => draggedItem = item);
+        item.addEventListener('dragover', e => e.preventDefault());
+        item.addEventListener('drop', function(e) {
+          e.preventDefault();
+          if (draggedItem !== this) {
+            const parent = favList;
+            parent.insertBefore(draggedItem, this);
+            const newOrder = Array.from(parent.children)
+              .filter(el => el.classList.contains('fav-item'))
+              .map(el => {
+                const id = Number(el.getAttribute('data-id'));
+                return favorites.find(f => f.id === id);
+              })
+              .filter(Boolean);
+            favorites = newOrder;
+            localStorage.setItem("colorFavorites", JSON.stringify(favorites));
+          }
+        });
+      });
+    }
+
+    function attachDeleteListeners() {
+      document.querySelectorAll('.fav-delete').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = Number(e.target.closest('[data-id]').getAttribute('data-id'));
+          favorites = favorites.filter(f => f.id !== id);
+          localStorage.setItem("colorFavorites", JSON.stringify(favorites));
+          renderFavorites();
+        });
+      });
+    }
+
+    // ✅ Event Delegation: ดาวน์โหลดทีละชุด
+    favList.addEventListener('click', (e) => {
+      const downloadBtn = e.target.closest('.fav-download-btn');
+      if (downloadBtn) {
+        e.stopPropagation();
+        const favId = Number(downloadBtn.getAttribute('data-fav-id'));
+        const fav = favorites.find(f => f.id === favId);
+        if (!fav) return;
+
+        const container = document.createElement('div');
+        container.className = 'color-block-container';
+        container.style.marginBottom = '20px';
+        container.innerHTML = `<strong style="color:#343a40; display:block; margin-bottom:10px;">${fav.name}</strong>`;
+        
+        const colorRow = document.createElement('div');
+        colorRow.style.display = 'flex';
+        colorRow.style.gap = '8px';
+
+        [fav.base, fav.comp, fav.analog[0], fav.analog[1]].forEach(color => {
+          const isDark = parseInt(color.slice(1,3), 16) < 130;
+          const box = document.createElement('div');
+          box.className = 'color-block';
+          box.style.cssText = `
+            flex:1;
+            width:60px;
+            height:60px;
+            background:${color};
+            color:white;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:0.65em;
+            font-weight:bold;
+            text-shadow:0 1px 2px rgba(0,0,0,0.4);
+          `;
+          box.textContent = color;
+          colorRow.appendChild(box);
+        });
+
+        container.appendChild(colorRow);
+        templateColors.innerHTML = '';
+        templateColors.appendChild(container);
+
+        applyTemplateStyle(currentTemplate);
+
+        setTimeout(() => {
+          html2canvas(downloadTemplate, { scale: 2 }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `Favorite_${fav.name.replace(/\s+/g, '_')}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+          });
+        }, 100);
+      }
+    });
+
+    // ใช้ class จัดการเทมเพลต
+    function applyTemplateStyle(style) {
+      downloadTemplate.className = '';
+      downloadTemplate.classList.add(`template-${style}`);
+    }
+
+    // ฟังก์ชันหลักสำหรับดาวน์โหลด
+    function fillTemplateAndDownload(schemes, filename) {
+      const now = new Date();
+      templateDate.textContent = now.toLocaleDateString('th-TH', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      const currentStyle = currentTemplate;
+      applyTemplateStyle(currentStyle);
+      templateColors.innerHTML = '';
+
+      if (schemes.length > 0) {
+        schemes.forEach(el => {
+          const title = el.querySelector('.scheme-header span').textContent;
+          const colors = Array.from(el.querySelectorAll('.color-item')).map(c => ({
+            color: c.getAttribute('data-color'),
+            bg: c.style.backgroundColor,
+            text: c.style.color
+          }));
+
+          const container = document.createElement('div');
+          container.className = 'color-block-container';
+          container.style.marginBottom = '20px';
+
+          let html = `<strong style="color:#343a40; display:block; margin-bottom:10px;">${title}</strong>`;
+          html += `<div style="display:flex; gap:8px;">`;
+          colors.forEach(c => {
+            html += `<div class="color-block" style="background:${c.bg};">${c.color}</div>`;
+          });
+          html += `</div>`;
+          container.innerHTML = html;
+          templateColors.appendChild(container);
+        });
+      } else {
+        favorites.forEach(fav => {
+          const container = document.createElement('div');
+          container.className = 'color-block-container';
+          container.style.marginBottom = '20px';
+
+          let html = `<strong style="color:#343a40; display:block; margin-bottom:10px;">${fav.name}</strong>`;
+          html += `<div style="display:flex; gap:8px;">`;
+          [fav.base, fav.comp, fav.analog[0], fav.analog[1]].forEach(color => {
+            html += `<div class="color-block" style="background:${color};">${color}</div>`;
+          });
+          html += `</div>`;
+          container.innerHTML = html;
+          templateColors.appendChild(container);
+        });
+      }
+
+      setTimeout(() => {
+        html2canvas(downloadTemplate, { scale: 2 }).then(canvas => {
+          const link = document.createElement('a');
+          link.download = `${filename.replace(/\s+/g, '_')}.png`;
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+        });
+      }, 100);
+    }
+
+    // ดาวน์โหลดชุดปัจจุบัน
+    downloadBtn.addEventListener('click', () => {
+      const schemes = document.querySelectorAll('.scheme');
+      fillTemplateAndDownload(schemes, 'Current_Color_Schemes');
+    });
+
+    // ดาวน์โหลดทั้งหมด
+    downloadFavBtn.addEventListener('click', () => {
+      if (favorites.length === 0) {
+        alert('ยังไม่มีชุดสีโปรด');
+        return;
+      }
+      fillTemplateAndDownload([], 'All_Favorites');
+    });
+
+    // เริ่มต้นแอป
+    mainColorInput.addEventListener("input", updateSchemes);
+    updateSchemes();
+    renderFavorites();
+  </script>
+</body>
+</html>

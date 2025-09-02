@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เครื่องมือส่วนตัวของคุณ</title>
+  <!-- Link to the Ant Design CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/4.24.1/antd.min.css">
+  <!-- Link to Font Awesome for the icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+      background-color: #f0f2f5;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+      text-align: center;
+    }
+    .container {
+      max-width: 900px;
+      padding: 24px;
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    .header {
+      margin-bottom: 24px;
+    }
+    .title {
+      font-size: 48px;
+      font-weight: 700;
+      color: #001529;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      font-size: 18px;
+      color: #8c8c8c;
+      margin-top: 0;
+    }
+    .features-list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+    .feature-card {
+      width: 180px;
+      padding: 24px;
+      background-color: #f5f5f5;
+      border-radius: 8px;
+      transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+      text-decoration: none; /* Add this to remove underline on links */
+      color: inherit; /* Add this to keep the text color consistent */
+    }
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+    .feature-icon {
+      font-size: 40px;
+      color: #1890ff;
+      margin-bottom: 16px;
+    }
+    .feature-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+    }
+    .cta-button {
+      background-color: #1890ff;
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      font-size: 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      text-decoration: none;
+    }
+    .cta-button:hover {
+      background-color: #40a9ff;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1 class="title">ชุดเครื่องมือส่วนตัวของคุณ</h1>
+    <p class="subtitle">เครื่องมือสำคัญที่จำเป็นในที่เดียว</p>
+  </div>
+  
+  <div class="features-list">
+    
+    <a href="interest-calculate.html" class="feature-card">
+      <div class="feature-icon"><i class="fa-solid fa-chart-line"></i></div>
+      <div class="feature-title">เครื่องคำนวณดอกเบี้ย</div>
+    </a>
+    <a href="achievementcal.html" class="feature-card">
+      <div class="feature-icon"><i class="fa-solid fa-medal"></i></div>
+      <div class="feature-title">เครื่องคำนวณความสำเร็จ</div>
+    </a>
+    <a href="qrgen.html" class="feature-card">
+      <div class="feature-icon"><i class="fa-solid fa-qrcode"></i></div>
+      <div class="feature-title">ตัวสร้าง QR Code</div>
+    </a>
+    <a href="passgen.html" class="feature-card">
+      <div class="feature-icon"><i class="fa-solid fa-key"></i></div>
+      <div class="feature-title">ตัวสร้างรหัสผ่าน</div>
+    </a>
+    <a href="colorpicker.html" class="feature-card">
+      <div class="feature-icon"><i class="fa-solid fa-palette"></i></div>
+      <div class="feature-title">ตัวเลือกสี</div>
+    </a>
+    <a href="metronone.html" class="feature-card">
+      <div class="feature-icon"><i class="fa-solid fa-music"></i></i></div>
+      <div class="feature-title">เครื่องให้จังหวะ</div>
+    </a>
+  <a href="cof.html" class="feature-card">
+      <div class="feature-icon"><i class="fa-solid fa-play"></i></div>
+      <div class="feature-title">Circle of Fifths</div>
+    </a>
+  </div>
+  
+  <!--<a href="#" class="cta-button">เริ่มใช้งาน</a> -->
+</div>
+
+</body>
+</html>

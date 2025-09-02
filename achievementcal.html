@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Achievement Calculator</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&display=swap');
+        body { 
+            font-family: 'Sarabun', sans-serif; 
+            lang: 'th-TH';
+        }
+        
+        /* Thai date picker styling */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            background: transparent;
+            bottom: 0;
+            color: transparent;
+            cursor: pointer;
+            height: auto;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: auto;
+        }
+        
+        input[type="date"] {
+            position: relative;
+        }
+
+        /* Force Thai locale for date inputs */
+        input[type="date"]::-webkit-datetime-edit {
+            font-family: 'Sarabun', sans-serif;
+        }
+
+        /* Calendar positioning fix */
+        .calendar-container {
+            position: relative;
+        }
+        
+        .calendar-dropdown {
+            position: fixed;
+            z-index: 1000;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 1rem;
+            width: 20rem;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        @media (max-width: 640px) {
+            .calendar-dropdown {
+                position: fixed;
+                top: 50% !important;
+                left: 50% !important;
+                transform: translate(-50%, -50%) !important;
+                width: 90vw;
+                max-width: 350px;
+                margin: 0 !important;
+            }
+        }
+        
+        /* Custom styles for extended progress bar */
+        .progress-container {
+            overflow: visible;
+        }
+    </style>
+    <script>
+        // Set Thai locale globally
+        if (typeof Intl !== 'undefined') {
+            Intl.DateTimeFormat.prototype.constructor.call = function() {
+                return new Intl.DateTimeFormat('th-TH', arguments[1]);
+            };
+        }
+        
+        // Override date input behavior
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set page language to Thai
+            document.documentElement.lang = 'th-TH';
+            
+            // Try to set browser locale to Thai
+            try {
+                if (navigator.language !== 'th-TH') {
+                    Object.defineProperty(navigator, 'language', {
+                        value: 'th-TH',
+                        writable: false
+                    });
+                }
+            } catch(e) {}
+        });
+    </script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useRef, useEffect } = React;
+        
+        // Simple SVG Icons
+        const Calendar = ({className}) => React.createElement('svg', {
+            className,
+            fill: 'none',
+            stroke: 'currentColor',
+            viewBox: '0 0 24 24'
+        }, React.createElement('rect', {x: '3', y: '4', width: '18', height: '18', rx: '2', ry: '2'}),
+        React.createElement('line', {x1: '16', y1: '2', x2: '16', y2: '6'}),
+        React.createElement('line', {x1: '8', y1: '2', x2: '8', y2: '6'}),
+        React.createElement('line', {x1: '3', y1: '10', x2: '21', y2: '10'}));
+
+        const Target = ({className}) => React.createElement('svg', {
+            className,
+            fill: 'none',
+            stroke: 'currentColor',
+            viewBox: '0 0 24 24'
+        }, React.createElement('circle', {cx: '12', cy: '12', r: '10'}),
+        React.createElement('circle', {cx: '12', cy: '12', r: '6'}),
+        React.createElement('circle', {cx: '12', cy: '12', r: '2'}));
+
+        const TrendingUp = ({className}) => React.createElement('svg', {
+            className,
+            fill: 'none',
+            stroke: 'currentColor',
+            viewBox: '0 0 24 24'
+        }, React.createElement('polyline', {points: '23 6 13.5 15.5 8.5 10.5 1 18'}),
+        React.createElement('polyline', {points: '17 6 23 6 23 12'}));
+
+        const Download = ({className}) => React.createElement('svg', {
+            className,
+            fill: 'none',
+            stroke: 'currentColor',
+            viewBox: '0 0 24 24'
+        }, React.createElement('path', {d: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'}),
+        React.createElement('polyline', {points: '7 10 12 15 17 10'}),
+        React.createElement('line', {x1: '12', y1: '15', x2: '12', y2: '3'}));
+
+        const AchievementCalculator = () => {
+            const [activeTab, setActiveTab] = useState('dateRange');
+            const [startDate, setStartDate] = useState('');
+            const [endDate, setEndDate] = useState('');
+            const [days, setDays] = useState('');
+            const [target, setTarget] = useState('');
+            const [current, setCurrent] = useState('');
+            const [showStartPicker, setShowStartPicker] = useState(false);
+            const [showEndPicker, setShowEndPicker] = useState(false);
+            const contentRef = useRef(null);
+
+            // Thai months and days
+            const thaiMonths = [
+                'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+                'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+            ];
+            
+            const thaiDaysShort = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+
+            // ฟังก์ชันแปลงวันที่เพื่อแก้ปัญหา timezone
+            const adjustForTimezone = (date) => {
+                if (!date) return null;
+                const d = new Date(date);
+                // เพิ่ม offset เพื่อชดเชย timezone
+                const timezoneOffset = d.getTimezoneOffset() * 60000;
+                return new Date(d.getTime() + timezoneOffset);
+            };
+
+            // Custom Thai Date Picker Component with improved positioning
+            const ThaiDatePicker = ({ value, onChange, placeholder, isOpen, setIsOpen }) => {
+                const today = new Date();
+                const [currentMonth, setCurrentMonth] = useState(today.getMonth());
+                const [currentYear, setCurrentYear] = useState(today.getFullYear());
+                const [calendarStyle, setCalendarStyle] = useState({});
+                const containerRef = useRef(null);
+                const calendarRef = useRef(null);
+                
+                const selectedDate = value ? adjustForTimezone(value) : null;
+                
+                // Calculate optimal calendar position with improved logic
+                useEffect(() => {
+                    if (isOpen && containerRef.current) {
+                        const container = containerRef.current;
+                        const containerRect = container.getBoundingClientRect();
+                        const viewportHeight = window.innerHeight;
+                        const viewportWidth = window.innerWidth;
+                        
+                        // Calendar dimensions
+                        const calendarHeight = 350;
+                        const calendarWidth = 320;
+                        
+                        // Check available space
+                        const spaceBelow = viewportHeight - containerRect.bottom;
+                        const spaceAbove = containerRect.top;
+                        const spaceRight = viewportWidth - containerRect.left;
+                        const spaceLeft = containerRect.right;
+                        
+                        let top, left;
+                        
+                        // For mobile screens, center the calendar
+                        if (viewportWidth <= 640) {
+                            setCalendarStyle({
+                                position: 'fixed',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%)',
+                                width: '90vw',
+                                maxWidth: '350px'
+                            });
+                            return;
+                        }
+                        
+                        // Determine vertical position
+                        if (spaceBelow >= calendarHeight) {
+                            // Show below
+                            top = containerRect.bottom + 8;
+                        } else if (spaceAbove >= calendarHeight) {
+                            // Show above
+                            top = containerRect.top - calendarHeight - 8;
+                        } else {
+                            // Center vertically in viewport
+                            top = Math.max(8, (viewportHeight - calendarHeight) / 2);
+                        }
+                        
+                        // Determine horizontal position
+                        if (spaceRight >= calendarWidth) {
+                            // Align to left edge of container
+                            left = containerRect.left;
+                        } else if (spaceLeft >= calendarWidth) {
+                            // Align to right edge of container
+                            left = containerRect.right - calendarWidth;
+                        } else {
+                            // Center horizontally in viewport
+                            left = Math.max(8, (viewportWidth - calendarWidth) / 2);
+                        }
+                        
+                        // Ensure calendar doesn't go outside viewport
+                        left = Math.max(8, Math.min(left, viewportWidth - calendarWidth - 8));
+                        top = Math.max(8, Math.min(top, viewportHeight - calendarHeight - 8));
+                        
+                        setCalendarStyle({
+                            position: 'fixed',
+                            top: `${top}px`,
+                            left: `${left}px`,
+                            width: `${calendarWidth}px`
+                        });
+                    }
+                }, [isOpen]);
+
+                // Close calendar when clicking outside
+                useEffect(() => {
+                    const handleClickOutside = (event) => {
+                        if (containerRef.current && !containerRef.current.contains(event.target)) {
+                            setIsOpen(false);
+                        }
+                    };
+
+                    if (isOpen) {
+                        document.addEventListener('mousedown', handleClickOutside);
+                        return () => document.removeEventListener('mousedown', handleClickOutside);
+                    }
+                }, [isOpen, setIsOpen]);
+                
+                const getDaysInMonth = (month, year) => {
+                    return new Date(year, month + 1, 0).getDate();
+                };
+                
+                const getFirstDayOfMonth = (month, year) => {
+                    return new Date(year, month, 1).getDay();
+                };
+                
+                const formatDisplayDate = (dateStr) => {
+                    if (!dateStr) return placeholder;
+                    const date = adjustForTimezone(dateStr);
+                    const day = date.getDate();
+                    const month = thaiMonths[date.getMonth()];
+                    const year = date.getFullYear() + 543;
+                    return `${day} ${month} ${year}`;
+                };
+                
+                const handleDateSelect = (day) => {
+                    // สร้างวันที่ใหม่โดยคำนึงถึง timezone
+                    const newDate = new Date(currentYear, currentMonth, day, 12, 0, 0); // ตั้งเวลาเป็นเที่ยงวันเพื่อหลีกเลี่ยงปัญหา timezone
+                    const year = newDate.getFullYear();
+                    const month = String(newDate.getMonth() + 1).padStart(2, '0');
+                    const dayFormatted = String(newDate.getDate()).padStart(2, '0');
+                    const dateString = `${year}-${month}-${dayFormatted}`;
+                    onChange(dateString);
+                    setIsOpen(false);
+                };
+                
+                const renderCalendar = () => {
+                    const daysInMonth = getDaysInMonth(currentMonth, currentYear);
+                    const firstDay = getFirstDayOfMonth(currentMonth, currentYear);
+                    const days = [];
+                    
+                    // Empty cells for days before month start
+                    for (let i = 0; i < firstDay; i++) {
+                        days.push(React.createElement('div', { key: `empty-${i}`, className: "p-2" }));
+                    }
+                    
+                    // Days of the month
+                    for (let day = 1; day <= daysInMonth; day++) {
+                        const isSelected = selectedDate && 
+                            selectedDate.getDate() === day && 
+                            selectedDate.getMonth() === currentMonth && 
+                            selectedDate.getFullYear() === currentYear;
+                            
+                        const isToday = new Date().getDate() === day && 
+                            new Date().getMonth() === currentMonth && 
+                            new Date().getFullYear() === currentYear;
+                            
+                        days.push(
+                            React.createElement('button', {
+                                key: day,
+                                onClick: () => handleDateSelect(day),
+                                className: `p-2 text-sm rounded transition-colors ${
+                                    isSelected ? 'bg-blue-600 text-white' : 
+                                    isToday ? 'bg-blue-100 text-blue-800 font-medium' : 
+                                    'text-gray-700 hover:bg-gray-100'
+                                }`
+                            }, day)
+                        );
+                    }
+                    
+                    return days;
+                };
+                
+                // Navigation functions
+                const goToPreviousMonth = () => {
+                    if (currentMonth === 0) {
+                        setCurrentMonth(11);
+                        setCurrentYear(currentYear - 1);
+                    } else {
+                        setCurrentMonth(currentMonth - 1);
+                    }
+                };
+                
+                const goToNextMonth = () => {
+                    if (currentMonth === 11) {
+                        setCurrentMonth(0);
+                        setCurrentYear(currentYear + 1);
+                    } else {
+                        setCurrentMonth(currentMonth + 1);
+                    }
+                };
+                
+                return React.createElement('div', { 
+                    ref: containerRef,
+                    className: "calendar-container"
+                },
+                    React.createElement('button', {
+                        onClick: () => setIsOpen(!isOpen),
+                        className: "w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left bg-white"
+                    }, formatDisplayDate(value)),
+                    
+                    isOpen && React.createElement('div', {
+                        ref: calendarRef,
+                        className: "calendar-dropdown",
+                        style: calendarStyle
+                    },
+                        // Header with month/year navigation
+                        React.createElement('div', { className: "flex justify-between items-center mb-4" },
+                            React.createElement('button', {
+                                onClick: goToPreviousMonth,
+                                className: "p-1 hover:bg-gray-100 rounded"
+                            }, '‹'),
+                            
+                            React.createElement('div', { className: "text-center font-medium" },
+                                `${thaiMonths[currentMonth]} ${currentYear + 543}`
+                            ),
+                            
+                            React.createElement('button', {
+                                onClick: goToNextMonth,
+                                className: "p-1 hover:bg-gray-100 rounded"
+                            }, '›')
+                        ),
+                        
+                        // Days header
+                        React.createElement('div', { className: "grid grid-cols-7 gap-1 mb-2" },
+                            thaiDaysShort.map(day => 
+                                React.createElement('div', {
+                                    key: day,
+                                    className: "p-2 text-xs font-medium text-gray-500 text-center"
+                                }, day)
+                            )
+                        ),
+                        
+                        // Calendar grid
+                        React.createElement('div', { className: "grid grid-cols-7 gap-1" },
+                            renderCalendar()
+                        ),
+                        
+                        // Today button
+                        React.createElement('div', { className: "mt-4 pt-4 border-t border-gray-200" },
+                            React.createElement('button', {
+                                onClick: () => {
+                                    const today = new Date();
+                                    // ตั้งเวลาเป็นเที่ยงวันเพื่อหลีกเลี่ยงปัญหา timezone
+                                    const adjustedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12, 0, 0);
+                                    const year = adjustedToday.getFullYear();
+                                    const month = String(adjustedToday.getMonth() + 1).padStart(2, '0');
+                                    const day = String(adjustedToday.getDate()).padStart(2, '0');
+                                    const dateString = `${year}-${month}-${day}`;
+                                    onChange(dateString);
+                                    setIsOpen(false);
+                                },
+                                className: "w-full py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md"
+                            }, "วันนี้")
+                        )
+                    )
+                );
+            };
+
+            // คำนวณจำนวนวัน
+            const calculateDays = () => {
+                if (activeTab === 'dateRange' && startDate && endDate) {
+                    const start = adjustForTimezone(startDate);
+                    const end = adjustForTimezone(endDate);
+                    
+                    // Ensure start date is before end date
+                    if (start > end) {
+                        // Swap dates if start is after end
+                        const temp = startDate;
+                        setStartDate(endDate);
+                        setEndDate(temp);
+                        return 0;
+                    }
+                    
+                    const diffTime = Math.abs(end - start);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                    return diffDays;
+                }
+                return parseInt(days) || 0;
+            };
+
+            // แปลงวันที่เป็นภาษาไทย
+            const formatThaiDate = (dateString) => {
+                if (!dateString) return '';
+                const date = adjustForTimezone(dateString);
+                const day = date.getDate();
+                const month = thaiMonths[date.getMonth()];
+                const year = date.getFullYear() + 543; // แปลงเป็น พ.ศ.
+                return `${day} ${month} ${year}`;
+            };
+
+            // แสดงช่วงวันที่ภาษาไทย
+            const getDateRangeDisplay = () => {
+                if (activeTab === 'dateRange' && startDate && endDate) {
+                    return `${formatThaiDate(startDate)} - ${formatThaiDate(endDate)}`;
+                }
+                return '';
+            };
+
+            // คำนวณสถิติ
+            const totalDays = calculateDays();
+            const targetAmount = parseFloat(target) || 0;
+            const currentAmount = parseFloat(current) || 0;
+            const remainingAmount = Math.max(0, targetAmount - currentAmount);
+            const dailyTarget = totalDays > 0 ? (remainingAmount / totalDays) : 0;
+            const progressPercentage = targetAmount > 0 ? (currentAmount / targetAmount * 100) : 0;
+            const isOnTrack = progressPercentage >= 50;
+
+            // แนะนำการกระจายยอด - แก้ไขการคำนวณยอดเดือน
+            const getRecommendations = () => {
+                if (!targetAmount || !totalDays || remainingAmount <= 0) return [];
+                
+                const recommendations = [];
+                
+                if (dailyTarget > 0) {
+                    recommendations.push(`ทำยอดวันละ ${dailyTarget.toLocaleString('th-TH', {maximumFractionDigits: 0})} บาท`);
+                    
+                    const weeklyTarget = dailyTarget * 7;
+                    recommendations.push(`ทำยอดสัปดาห์ละ ${weeklyTarget.toLocaleString('th-TH', {maximumFractionDigits: 0})} บาท`);
+                    
+                    // ใช้จำนวนวันจริงของเดือนแทน 30 วัน
+                    const today = new Date();
+                    const daysInCurrentMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+                    const monthlyTarget = dailyTarget * daysInCurrentMonth;
+                    
+                    // ตรวจสอบว่าไม่เกินเป้าหมายก่อนแสดง
+                    if (monthlyTarget <= remainingAmount) {
+                        recommendations.push(`ทำยอดเดือนละ ${monthlyTarget.toLocaleString('th-TH', {maximumFractionDigits: 0})} บาท`);
+                    } else {
+                        // แสดงเฉพาะยอดที่เหลือหากยอดเดือนเกินเป้าหมาย
+                        recommendations.push(`ทำยอดเดือนละ ${remainingAmount.toLocaleString('th-TH', {maximumFractionDigits: 0})} บาท (ยอดคงเหลือ)`);
+                    }
+                }
+                
+                return recommendations;
+            };
+
+            // บันทึกเป็น PNG
+            const saveAsPNG = async () => {
+                if (!contentRef.current) return;
+
+                try {
+                    const canvas = await html2canvas(contentRef.current, {
+                        backgroundColor: '#ffffff',
+                        scale: 2,
+                        useCORS: true
+                    });
+                    
+                    const link = document.createElement('a');
+                    link.download = 'achievement-report.png';
+                    link.href = canvas.toDataURL();
+                    link.click();
+                } catch (error) {
+                    alert('ไม่สามารถบันทึกภาพได้ กรุณาใช้ Ctrl+P เพื่อพิมพ์แทน');
+                }
+            };
+
+            return React.createElement('div', { className: "min-h-screen bg-gray-50 p-4" },
+                React.createElement('div', { className: "max-w-4xl mx-auto" },
+                    React.createElement('div', { ref: contentRef, className: "bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden" },
+                        // Header
+                        React.createElement('div', { className: "bg-white border-b border-gray-200 p-6" },
+                            React.createElement('h1', { className: "text-2xl font-semibold text-gray-800 flex items-center gap-2" },
+                                React.createElement(Target, { className: "w-6 h-6 text-blue-600" }),
+                                "Achievement Calculator"
+                            ),
+                            React.createElement('p', { className: "text-gray-600 mt-1" }, "คำนวณและติดตามยอด Achievement ของคุณ")
+                        ),
+
+                        // Tabs
+                        React.createElement('div', { className: "bg-gray-50 border-b border-gray-200" },
+                            React.createElement('div', { className: "flex" },
+                                React.createElement('button', {
+                                    className: `px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                                        activeTab === 'dateRange'
+                                            ? 'border-blue-600 text-blue-600 bg-white'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700'
+                                    }`,
+                                    onClick: () => setActiveTab('dateRange')
+                                },
+                                    React.createElement(Calendar, { className: "w-4 h-4 inline mr-2" }),
+                                    "ช่วงวันที่"
+                                ),
+                                React.createElement('button', {
+                                    className: `px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                                        activeTab === 'days'
+                                            ? 'border-blue-600 text-blue-600 bg-white'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700'
+                                    }`,
+                                    onClick: () => setActiveTab('days')
+                                }, "จำนวนวัน")
+                            )
+                        ),
+
+                        // Content
+                        React.createElement('div', { className: "p-6" },
+                            // Input Section
+                            React.createElement('div', { className: "grid grid-cols-1 md:grid-cols-2 gap-6 mb-8" },
+                                // Date Range Tab
+                                activeTab === 'dateRange' && React.createElement(React.Fragment, null,
+                                    React.createElement('div', null,
+                                        React.createElement('label', { className: "block text-sm font-medium text-gray-700 mb-2" }, "วันที่เริ่มต้น"),
+                                        React.createElement(ThaiDatePicker, {
+                                            value: startDate,
+                                            onChange: setStartDate,
+                                            placeholder: "เลือกวันที่เริ่มต้น",
+                                            isOpen: showStartPicker,
+                                            setIsOpen: setShowStartPicker
+                                        })
+                                    ),
+                                    React.createElement('div', null,
+                                        React.createElement('label', { className: "block text-sm font-medium text-gray-700 mb-2" }, "วันที่สิ้นสุด"),
+                                        React.createElement(ThaiDatePicker, {
+                                            value: endDate,
+                                            onChange: setEndDate,
+                                            placeholder: "เลือกวันที่สิ้นสุด",
+                                            isOpen: showEndPicker,
+                                            setIsOpen: setShowEndPicker
+                                        })
+                                    )
+                                ),
+
+                                // Days Tab
+                                activeTab === 'days' && React.createElement('div', { className: "md:col-span-2" },
+                                    React.createElement('label', { className: "block text-sm font-medium text-gray-700 mb-2" }, "จำนวนวัน"),
+                                    React.createElement('input', {
+                                        type: "number",
+                                        value: days,
+                                        onChange: (e) => setDays(e.target.value),
+                                        placeholder: "กรอกจำนวนวัน",
+                                        className: "w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    })
+                                ),
+
+                                // Target and Current Amount
+                                React.createElement('div', null,
+                                    React.createElement('label', { className: "block text-sm font-medium text-gray-700 mb-2" }, "เป้าหมาย (บาท)"),
+                                    React.createElement('input', {
+                                        type: "number",
+                                        value: target,
+                                        onChange: (e) => setTarget(e.target.value),
+                                        placeholder: "กรอกยอดเป้าหมาย",
+                                        className: "w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    })
+                                ),
+                                React.createElement('div', null,
+                                    React.createElement('label', { className: "block text-sm font-medium text-gray-700 mb-2" }, "ยอดปัจจุบัน (บาท)"),
+                                    React.createElement('input', {
+                                        type: "number",
+                                        value: current,
+                                        onChange: (e) => setCurrent(e.target.value),
+                                        placeholder: "กรอกยอดปัจจุบัน",
+                                        className: "w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    })
+                                )
+                            ),
+
+                            // Results Section
+                            totalDays > 0 && targetAmount > 0 && React.createElement('div', { className: "space-y-6" },
+                                // Summary Cards
+                                React.createElement('div', { className: "grid grid-cols-1 md:grid-cols-4 gap-4" },
+                                    React.createElement('div', { className: "bg-blue-50 rounded-lg p-4 text-center" },
+                                        React.createElement('div', { className: "text-2xl font-bold text-blue-600" }, totalDays),
+                                        React.createElement('div', { className: "text-sm text-gray-600" }, "วัน"),
+                                        getDateRangeDisplay() && React.createElement('div', { className: "text-xs text-gray-500 mt-1" }, getDateRangeDisplay())
+                                    ),
+                                    React.createElement('div', { className: "bg-green-50 rounded-lg p-4 text-center" },
+                                        React.createElement('div', { className: "text-2xl font-bold text-green-600" },
+                                            targetAmount.toLocaleString('th-TH')
+                                        ),
+                                        React.createElement('div', { className: "text-sm text-gray-600" }, "เป้าหมาย")
+                                    ),
+                                    React.createElement('div', { className: "bg-yellow-50 rounded-lg p-4 text-center" },
+                                        React.createElement('div', { className: "text-2xl font-bold text-yellow-600" },
+                                            currentAmount.toLocaleString('th-TH')
+                                        ),
+                                        React.createElement('div', { className: "text-sm text-gray-600" }, "ยอดปัจจุบัน")
+                                    ),
+                                    React.createElement('div', { className: "bg-red-50 rounded-lg p-4 text-center" },
+                                        React.createElement('div', { className: "text-2xl font-bold text-red-600" },
+                                            remainingAmount.toLocaleString('th-TH')
+                                        ),
+                                        React.createElement('div', { className: "text-sm text-gray-600" }, "ยอดที่เหลือ")
+                                    )
+                                ),
+
+                                // Progress Bar - UPDATED: ไม่เพิ่มความยาวเมื่อเกิน 100% แต่เปลี่ยนสี
+                                React.createElement('div', { className: "bg-gray-50 rounded-lg p-6" },
+                                    React.createElement('div', { className: "flex justify-between items-center mb-2" },
+                                        React.createElement('span', { className: "text-sm font-medium text-gray-700" }, "ความคืบหน้า"),
+                                        React.createElement('span', { className: "text-sm font-medium text-gray-700" },
+                                            `${progressPercentage.toFixed(1)}%`
+                                        )
+                                    ),
+                                    React.createElement('div', { className: "w-full bg-gray-200 rounded-full h-3" },
+                                        React.createElement('div', {
+                                            className: `h-3 rounded-full transition-all duration-300 ${
+                                                progressPercentage >= 100 ? 'bg-purple-600' : // เปลี่ยนเป็นสีม่วงเมื่อเกิน 100%
+                                                progressPercentage >= 75 ? 'bg-blue-600' :
+                                                progressPercentage >= 50 ? 'bg-yellow-600' : 'bg-red-600'
+                                            }`,
+                                            style: { 
+                                                width: `${Math.min(100, progressPercentage)}%` // ไม่เกิน 100%
+                                            }
+                                        })
+                                    ),
+                                    progressPercentage > 100 && React.createElement('div', { 
+                                        className: "mt-2 text-sm text-purple-600 font-medium text-center"
+                                    }, `🎉 ทำได้เกินเป้าหมาย ${(progressPercentage - 100).toFixed(1)}%`)
+                                ),
+
+                                // Daily Target (แสดงเฉพาะเมื่อยังไม่ถึงเป้าหมาย)
+                                dailyTarget > 0 && remainingAmount > 0 && React.createElement('div', { className: "bg-blue-50 rounded-lg p-6 text-center" },
+                                    React.createElement('h3', { className: "text-lg font-medium text-gray-800 mb-2" }, "ยอดที่ต้องทำต่อวัน"),
+                                    React.createElement('div', { className: "text-3xl font-bold text-blue-600" },
+                                        dailyTarget.toLocaleString('th-TH', {maximumFractionDigits: 0}), " บาท"
+                                    ),
+                                    React.createElement('div', { className: "text-sm text-gray-600 mt-2" },
+                                        `เพื่อให้ถึงเป้าหมาย ${targetAmount.toLocaleString('th-TH')} บาท ใน ${totalDays} วัน`
+                                    )
+                                ),
+
+                                // Recommendations
+                                React.createElement('div', { className: "bg-gray-50 rounded-lg p-6" },
+                                    React.createElement('h3', { className: "text-lg font-medium text-gray-800 mb-4 flex items-center gap-2" },
+                                        React.createElement(TrendingUp, { className: "w-5 h-5 text-blue-600" }),
+                                        "คำแนะนำการกระจายยอด"
+                                    ),
+                                    
+                                    remainingAmount > 0 ?
+                                        React.createElement('div', { className: "space-y-3" },
+                                            getRecommendations().map((rec, index) =>
+                                                React.createElement('div', { key: index, className: "flex items-center gap-3" },
+                                                    React.createElement('div', { className: "w-2 h-2 bg-blue-600 rounded-full" }),
+                                                    React.createElement('span', { className: "text-gray-700" }, rec)
+                                                )
+                                            ),
+                                            
+                                            progressPercentage < 100 && React.createElement('div', {
+                                                className: `mt-4 p-3 rounded-lg ${
+                                                    isOnTrack ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                                }`
+                                            },
+                                                React.createElement('div', { className: "font-medium" },
+                                                    isOnTrack 
+                                                        ? '✅ คุณอยู่ในเส้นทางที่ดี!' 
+                                                        : '⚠️ ควรเร่งการทำยอดเพื่อให้ถึงเป้าหมาย'
+                                                )
+                                            )
+                                        ) :
+                                        React.createElement('div', { className: "text-green-600 text-center py-4 font-medium" },
+                                            "🎉 ยินดีด้วย! คุณทำเป้าหมายสำเร็จแล้ว"
+                                        )
+                                )
+                            )
+                        ),
+
+                        // Save Button
+                        React.createElement('div', { className: "bg-gray-50 border-t border-gray-200 p-4" },
+                            React.createElement('button', {
+                                onClick: saveAsPNG,
+                                className: "w-full md:w-auto px-6 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                            },
+                                React.createElement(Download, { className: "w-4 h-4" }),
+                                "บันทึกเป็น PNG"
+                            )
+                        )
+                    )
+                )
+            );
+        };
+
+        ReactDOM.render(React.createElement(AchievementCalculator), document.getElementById('root'));
+    </script>
+</body>
+</html>

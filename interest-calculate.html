@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>คำนวณดอกเบี้ยเงินฝาก</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Kanit', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%);
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(to right, #1a3a8f, #1e6bb8);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            margin: 0;
+            font-weight: 500;
+            font-size: 28px;
+        }
+        
+        .description {
+            margin: 10px 0 0;
+            font-weight: 300;
+        }
+        
+        .tabs {
+            display: flex;
+            background-color: #f0f5ff;
+            overflow-x: auto;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 15px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            color: #5c7c9e;
+            transition: all 0.3s;
+            position: relative;
+            white-space: nowrap;
+            min-width: 120px;
+        }
+        
+        .tab-btn.active {
+            color: #1a3a8f;
+            background-color: white;
+        }
+        
+        .tab-btn.active:after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(to right, #1a3a8f, #1e6bb8);
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 25px;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #1a3a8f;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #d1d9e6;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+        
+        input:focus, select:focus {
+            border-color: #4b6cb7;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(75, 108, 183, 0.2);
+        }
+        
+        .date-inputs {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .date-inputs > div {
+            flex: 1;
+        }
+        
+        button.calculate-btn {
+            background: linear-gradient(to right, #1a3a8f, #1e6bb8);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+            font-weight: 500;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button.calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(26, 58, 143, 0.3);
+        }
+        
+        button.calculate-btn:active {
+            transform: translateY(0);
+        }
+        
+        .result {
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(to right, #f0f5ff, #e6eeff);
+            border-radius: 10px;
+            display: none;
+            animation: fadeIn 0.5s;
+            border-left: 5px solid #1a3a8f;
+        }
+        
+        .result h3 {
+            margin-top: 0;
+            color: #1a3a8f;
+            border-bottom: 1px solid #c5d5ff;
+            padding-bottom: 10px;
+        }
+        
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        
+        .result-label {
+            color: #5c7c9e;
+        }
+        
+        .result-value {
+            font-weight: 500;
+            color: #1a3a8f;
+        }
+        
+        .highlight {
+            color: #e74c3c;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        
+        .thai-calendar-note {
+            text-align: center;
+            margin-top: 15px;
+            color: #5c7c9e;
+            font-size: 14px;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .tier-rates {
+            margin-top: 20px;
+        }
+        
+        .tier-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: #1a3a8f;
+        }
+        
+        .tier-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        
+        .tier-amount {
+            flex: 1;
+        }
+        
+        .tier-rate {
+            flex: 1;
+        }
+        
+        .remove-tier {
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .add-tier-btn {
+            background: #2ed573;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .tier-results {
+            margin-top: 15px;
+            border-top: 1px dashed #c5d5ff;
+            padding-top: 15px;
+        }
+        
+        .tier-result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 600px) {
+            .date-inputs {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .tab-btn {
+                padding: 12px 8px;
+                font-size: 14px;
+            }
+            
+            .container {
+                border-radius: 10px;
+            }
+            
+            .tier-row {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .tier-amount, .tier-rate {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>คำนวณดอกเบี้ยเงินฝาก</h1>
+            <p class="description">คำนวณดอกเบี้ยเงินฝากอย่างง่ายด้วยปฏิทินภาษาไทย</p>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="date"><i class="fas fa-calendar-alt"></i> กำหนดโดยวันที่</button>
+            <button class="tab-btn" data-tab="days"><i class="fas fa-calendar-day"></i> กำหนดโดยจำนวนวัน</button>
+            <button class="tab-btn" data-tab="tiered"><i class="fas fa-layer-group"></i> อัตราหลายระดับ</button>
+        </div>
+        
+        <div class="tab-content active" id="date-tab">
+            <div class="form-group">
+                <label for="principal"><i class="fas fa-coins"></i> จำนวนเงินต้น (บาท)</label>
+                <input type="number" id="principal" placeholder="กรอกจำนวนเงินต้น" min="1">
+                <div class="error-message" id="principal-error">กรุณากรอกจำนวนเงินต้นที่มากกว่า 0</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="interest-rate"><i class="fas fa-percent"></i> อัตราดอกเบี้ยต่อปี (%)</label>
+                <input type="number" id="interest-rate" step="0.01" placeholder="กรอกอัตราดอกเบี้ย" min="0.01">
+                <div class="error-message" id="interest-rate-error">กรุณากรอกอัตราดอกเบี้ยที่มากกว่า 0</div>
+            </div>
+            
+            <div class="form-group">
+                <label><i class="far fa-calendar"></i> ระยะเวลา</label>
+                <div class="date-inputs">
+                    <div>
+                        <label for="start-date">วันที่เริ่มต้น</label>
+                        <input type="date" id="start-date">
+                    </div>
+                    <div>
+                        <label for="end-date">วันที่สิ้นสุด</label>
+                        <input type="date" id="end-date">
+                    </div>
+                </div>
+                <div class="error-message" id="date-error">วันที่สิ้นสุดต้องมาหลังจากวันที่เริ่มต้น</div>
+            </div>
+            
+            <button class="calculate-btn" id="calculate-date"><i class="fas fa-calculator"></i> คำนวณดอกเบี้ย</button>
+            
+            <p class="thai-calendar-note">* ปฏิทินที่แสดงเป็นภาษาไทยตามการตั้งค่าของเบราว์เซอร์ของคุณ</p>
+        </div>
+        
+        <div class="tab-content" id="days-tab">
+            <div class="form-group">
+                <label for="principal-days"><i class="fas fa-coins"></i> จำนวนเงินต้น (บาท)</label>
+                <input type="number" id="principal-days" placeholder="กรอกจำนวนเงินต้น" min="1">
+                <div class="error-message" id="principal-days-error">กรุณากรอกจำนวนเงินต้นที่มากกว่า 0</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="interest-rate-days"><i class="fas fa-percent"></i> อัตราดอกเบี้ยต่อปี (%)</label>
+                <input type="number" id="interest-rate-days" step="0.01" placeholder="กรอกอัตราดอกเบี้ย" min="0.01">
+                <div class="error-message" id="interest-rate-days-error">กรุณากรอกอัตราดอกเบี้ยที่มากกว่า 0</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="days"><i class="fas fa-calendar-day"></i> จำนวนวัน</label>
+                <input type="number" id="days" placeholder="กรอกจำนวนวัน" min="1">
+                <div class="error-message" id="days-error">กรุณากรอกจำนวนวันที่มากกว่า 0</div>
+            </div>
+            
+            <button class="calculate-btn" id="calculate-days"><i class="fas fa-calculator"></i> คำนวณดอกเบี้ย</button>
+        </div>
+        
+        <div class="tab-content" id="tiered-tab">
+            <div class="form-group">
+                <label for="principal-tiered"><i class="fas fa-coins"></i> จำนวนเงินต้น (บาท)</label>
+                <input type="number" id="principal-tiered" placeholder="กรอกจำนวนเงินต้น" min="1">
+                <div class="error-message" id="principal-tiered-error">กรุณากรอกจำนวนเงินต้นที่มากกว่า 0</div>
+            </div>
+            
+            <div class="form-group">
+                <label><i class="far fa-calendar"></i> ระยะเวลา</label>
+                <div class="date-inputs">
+                    <div>
+                        <label for="start-date-tiered">วันที่เริ่มต้น</label>
+                        <input type="date" id="start-date-tiered">
+                    </div>
+                    <div>
+                        <label for="end-date-tiered">วันที่สิ้นสุด</label>
+                        <input type="date" id="end-date-tiered">
+                    </div>
+                </div>
+                <div class="error-message" id="date-tiered-error">วันที่สิ้นสุดต้องมาหลังจากวันที่เริ่มต้น</div>
+            </div>
+            
+            <div class="form-group">
+                <label><i class="fas fa-layer-group"></i> อัตราดอกเบี้ยแบบหลายระดับ</label>
+                <div class="tier-rates">
+                    <div class="tier-header">
+                        <span>จำนวนเงิน (บาท)</span>
+                        <span>อัตราดอกเบี้ย (%)</span>
+                        <span>การดำเนินการ</span>
+                    </div>
+                    <div id="tier-container">
+                        <div class="tier-row">
+                            <div class="tier-amount">
+                                <input type="number" class="tier-amount-from" placeholder="จาก" min="0" value="0">
+                                <span>ถึง</span>
+                                <input type="number" class="tier-amount-to" placeholder="ถึง" min="0">
+                            </div>
+                            <div class="tier-rate">
+                                <input type="number" class="tier-rate-value" step="0.01" placeholder="อัตราดอกเบี้ย" min="0.01">
+                            </div>
+                            <button class="remove-tier" disabled><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                    <button class="add-tier-btn" id="add-tier"><i class="fas fa-plus"></i> เพิ่มระดับ</button>
+                </div>
+            </div>
+            
+            <button class="calculate-btn" id="calculate-tiered"><i class="fas fa-calculator"></i> คำนวณดอกเบี้ย</button>
+        </div>
+        
+        <div class="result" id="result">
+            <h3><i class="fas fa-chart-pie"></i> ผลการคำนวณ</h3>
+            
+            <div class="result-item">
+                <span class="result-label">จำนวนวัน:</span>
+                <span id="result-days" class="result-value highlight">0</span>
+            </div>
+            
+            <div class="result-item">
+                <span class="result-label">ดอกเบี้ยที่ได้รับ:</span>
+                <span id="result-interest" class="result-value highlight">0.00 บาท</span>
+            </div>
+            
+            <div class="result-item">
+                <span class="result-label">ยอดรวมทั้งหมด:</span>
+                <span id="result-total" class="result-value highlight">0.00 บาท</span>
+            </div>
+            
+            <div class="result-item">
+                <span class="result-label">อัตราดอกเบี้ยต่อปี:</span>
+                <span id="result-interest-rate" class="result-value">0.00%</span>
+            </div>
+            
+            <div class="result-item">
+                <span class="result-label">เงินต้น:</span>
+                <span id="result-principal" class="result-value">0.00 บาท</span>
+            </div>
+            
+            <div class="tier-results" id="tier-results" style="display: none;">
+                <h4>รายละเอียดการคำนวณตามระดับ</h4>
+                <div id="tier-results-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ฟังก์ชันเปลี่ยนแท็บ
+        document.querySelectorAll('.tab-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                // ลบคลาส active จากปุ่มทั้งหมด
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                // เพิ่มคลาส active ให้ปุ่มที่ถูกคลิก
+                button.classList.add('active');
+                
+                // ซ่อนเนื้อหาแท็บทั้งหมด
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                // แสดงเนื้อหาแท็บที่เกี่ยวข้อง
+                const tabId = button.getAttribute('data-tab');
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+            });
+        });
+        
+        // ฟังก์ชันแสดงข้อผิดพลาด
+        function showError(elementId, message) {
+            const errorElement = document.getElementById(elementId);
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+        
+        // ฟังก์ชันซ่อนข้อผิดพลาด
+        function hideError(elementId) {
+            document.getElementById(elementId).style.display = 'none';
+        }
+        
+        // ฟังก์ชันคำนวณดอกเบี้ยจากวันที่
+        document.getElementById('calculate-date').addEventListener('click', () => {
+            const principal = parseFloat(document.getElementById('principal').value);
+            const interestRate = parseFloat(document.getElementById('interest-rate').value);
+            const startDate = new Date(document.getElementById('start-date').value);
+            const endDate = new Date(document.getElementById('end-date').value);
+            
+            // ตรวจสอบข้อมูล
+            let isValid = true;
+            
+            if (isNaN(principal) || principal <= 0) {
+                showError('principal-error', 'กรุณากรอกจำนวนเงินต้นที่มากกว่า 0');
+                isValid = false;
+            } else {
+                hideError('principal-error');
+            }
+            
+            if (isNaN(interestRate) || interestRate <= 0) {
+                showError('interest-rate-error', 'กรุณากรอกอัตราดอกเบี้ยที่มากกว่า 0');
+                isValid = false;
+            } else {
+                hideError('interest-rate-error');
+            }
+            
+            if (isNaN(startDate.getTime())) {
+                showError('date-error', 'กรุณาเลือกวันที่เริ่มต้น');
+                isValid = false;
+            } else if (isNaN(endDate.getTime())) {
+                showError('date-error', 'กรุณาเลือกวันที่สิ้นสุด');
+                isValid = false;
+            } else if (startDate >= endDate) {
+                showError('date-error', 'วันที่สิ้นสุดต้องมาหลังจากวันที่เริ่มต้น');
+                isValid = false;
+            } else {
+                hideError('date-error');
+            }
+            
+            if (!isValid) return;
+            
+            // คำนวณจำนวนวัน
+            const timeDiff = endDate.getTime() - startDate.getTime();
+            const days = Math.ceil(timeDiff / (1000 * 3600 * 24));
+            
+            // คำนวณดอกเบี้ย (ใช้สูตรการคำนวณดอกเบี้ยอย่างง่าย)
+            const interest = principal * (interestRate / 100) * (days / 365);
+            const total = principal + interest;
+            
+            // แสดงผล
+            displayResult(days, interest, total, interestRate, principal);
+        });
+        
+        // ฟังก์ชันคำนวณดอกเบี้ยจากจำนวนวัน
+        document.getElementById('calculate-days').addEventListener('click', () => {
+            const principal = parseFloat(document.getElementById('principal-days').value);
+            const interestRate = parseFloat(document.getElementById('interest-rate-days').value);
+            const days = parseInt(document.getElementById('days').value);
+            
+            // ตรวจสอบข้อมูล
+            let isValid = true;
+            
+            if (isNaN(principal) || principal <= 0) {
+                showError('principal-days-error', 'กรุณากรอกจำนวนเงินต้นที่มากกว่า 0');
+                isValid = false;
+            } else {
+                hideError('principal-days-error');
+            }
+            
+            if (isNaN(interestRate) || interestRate <= 0) {
+                showError('interest-rate-days-error', 'กรุณากรอกอัตราดอกเบี้ยที่มากกว่า 0');
+                isValid = false;
+            } else {
+                hideError('interest-rate-days-error');
+            }
+            
+            if (isNaN(days) || days <= 0) {
+                showError('days-error', 'กรุณากรอกจำนวนวันที่มากกว่า 0');
+                isValid = false;
+            } else {
+                hideError('days-error');
+            }
+            
+            if (!isValid) return;
+            
+            // คำนวณดอกเบี้ย (ใช้สูตรการคำนวณดอกเบี้ยอย่างง่าย)
+            const interest = principal * (interestRate / 100) * (days / 365);
+            const total = principal + interest;
+            
+            // แสดงผล
+            displayResult(days, interest, total, interestRate, principal);
+        });
+        
+        // ฟังก์ชันคำนวณดอกเบี้ยแบบหลายอัตรา
+        document.getElementById('calculate-tiered').addEventListener('click', () => {
+            const principal = parseFloat(document.getElementById('principal-tiered').value);
+            const startDate = new Date(document.getElementById('start-date-tiered').value);
+            const endDate = new Date(document.getElementById('end-date-tiered').value);
+            
+            // ตรวจสอบข้อมูล
+            let isValid = true;
+            
+            if (isNaN(principal) || principal <= 0) {
+                showError('principal-tiered-error', 'กรุณากรอกจำนวนเงินต้นที่มากกว่า 0');
+                isValid = false;
+            } else {
+                hideError('principal-tiered-error');
+            }
+            
+            if (isNaN(startDate.getTime())) {
+                showError('date-tiered-error', 'กรุณาเลือกวันที่เริ่มต้น');
+                isValid = false;
+            } else if (isNaN(endDate.getTime())) {
+                showError('date-tiered-error', 'กรุณาเลือกวันที่สิ้นสุด');
+                isValid = false;
+            } else if (startDate >= endDate) {
+                showError('date-tiered-error', 'วันที่สิ้นสุดต้องมาหลังจากวันที่เริ่มต้น');
+                isValid = false;
+            } else {
+                hideError('date-tiered-error');
+            }
+            
+            // ตรวจสอบอัตราดอกเบี้ยแบบหลายระดับ
+            const tierRows = document.querySelectorAll('.tier-row');
+            const tiers = [];
+            
+            for (let i = 0; i < tierRows.length; i++) {
+                const row = tierRows[i];
+                const from = parseFloat(row.querySelector('.tier-amount-from').value);
+                const to = parseFloat(row.querySelector('.tier-amount-to').value);
+                const rate = parseFloat(row.querySelector('.tier-rate-value').value);
+                
+                if (isNaN(from) || isNaN(to) || isNaN(rate) || rate <= 0) {
+                    alert(`กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้องในระดับที่ ${i+1}`);
+                    isValid = false;
+                    break;
+                }
+                
+                if (from >= to) {
+                    alert(`ในระดับที่ ${i+1} จำนวนเงิน "ถึง" ต้องมากกว่า "จาก"`);
+                    isValid = false;
+                    break;
+                }
+                
+                tiers.push({ from, to, rate });
+            }
+            
+            if (!isValid) return;
+            
+            // คำนวณจำนวนวัน
+            const timeDiff = endDate.getTime() - startDate.getTime();
+            const days = Math.ceil(timeDiff / (1000 * 3600 * 24));
+            
+            // คำนวณดอกเบี้ยแบบหลายอัตรา
+            let totalInterest = 0;
+            let remainingPrincipal = principal;
+            const tierDetails = [];
+            
+            for (let i = 0; i < tiers.length; i++) {
+                const tier = tiers[i];
+                let tierAmount;
+                
+                if (remainingPrincipal <= 0) break;
+                
+                if (remainingPrincipal > (tier.to - tier.from)) {
+                    tierAmount = tier.to - tier.from;
+                } else {
+                    tierAmount = remainingPrincipal;
+                }
+                
+                // อย่าคำนวณถ้า tierAmount เป็นลบ
+                if (tierAmount < 0) continue;
+                
+                const tierInterest = tierAmount * (tier.rate / 100) * (days / 365);
+                totalInterest += tierInterest;
+                remainingPrincipal -= tierAmount;
+                
+                tierDetails.push({
+                    range: `${formatCurrency(tier.from)} - ${formatCurrency(tier.to)} บาท`,
+                    amount: formatCurrency(tierAmount),
+                    rate: tier.rate.toFixed(2),
+                    interest: formatCurrency(tierInterest)
+                });
+            }
+            
+            // ถ้ามีเงินต้นเหลือและไม่มีระดับที่ครอบคลุม ให้ใช้อัตราสุดท้าย
+            if (remainingPrincipal > 0 && tiers.length > 0) {
+                const lastTier = tiers[tiers.length - 1];
+                const tierInterest = remainingPrincipal * (lastTier.rate / 100) * (days / 365);
+                totalInterest += tierInterest;
+                
+                tierDetails.push({
+                    range: `เกิน ${formatCurrency(lastTier.to)} บาท`,
+                    amount: formatCurrency(remainingPrincipal),
+                    rate: lastTier.rate.toFixed(2),
+                    interest: formatCurrency(tierInterest)
+                });
+            }
+            
+            const total = principal + totalInterest;
+            
+            // คำนวณอัตราดอกเบี้ยเฉลี่ย
+            const avgInterestRate = (totalInterest / principal) * (365 / days) * 100;
+            
+            // แสดงผล
+            displayTieredResult(days, totalInterest, total, avgInterestRate, principal, tierDetails);
+        });
+        
+        // ฟังก์ชันแสดงผลลัพธ์
+        function displayResult(days, interest, total, interestRate, principal) {
+            // จัดรูปแบบตัวเลขเป็นรูปแบบเงินไทย
+            const formatCurrency = (amount) => {
+                return amount.toLocaleString('th-TH', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            };
+            
+            document.getElementById('result-days').textContent = days.toLocaleString('th-TH') + ' วัน';
+            document.getElementById('result-interest').textContent = formatCurrency(interest) + ' บาท';
+            document.getElementById('result-total').textContent = formatCurrency(total) + ' บาท';
+            document.getElementById('result-interest-rate').textContent = interestRate.toFixed(2) + '%';
+            document.getElementById('result-principal').textContent = formatCurrency(principal) + ' บาท';
+            
+            // ซ่อนส่วนแสดงผลแบบหลายระดับ
+            document.getElementById('tier-results').style.display = 'none';
+            document.getElementById('result').style.display = 'block';
+            
+            // เลื่อนไปยังผลลัพธ์
+            document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // ฟังก์ชันแสดงผลลัพธ์แบบหลายอัตรา
+        function displayTieredResult(days, interest, total, interestRate, principal, tierDetails) {
+            // จัดรูปแบบตัวเลขเป็นรูปแบบเงินไทย
+            const formatCurrency = (amount) => {
+                return amount.toLocaleString('th-TH', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            };
+            
+            document.getElementById('result-days').textContent = days.toLocaleString('th-TH') + ' วัน';
+            document.getElementById('result-interest').textContent = formatCurrency(interest) + ' บาท';
+            document.getElementById('result-total').textContent = formatCurrency(total) + ' บาท';
+            document.getElementById('result-interest-rate').textContent = interestRate.toFixed(2) + '%';
+            document.getElementById('result-principal').textContent = formatCurrency(principal) + ' บาท';
+            
+            // แสดงผลลัพธ์แบบหลายระดับ
+            const tierResultsContainer = document.getElementById('tier-results-container');
+            tierResultsContainer.innerHTML = '';
+            
+            tierDetails.forEach(detail => {
+                const div = document.createElement('div');
+                div.className = 'tier-result-item';
+                div.innerHTML = `
+                    <div>${detail.range} (@${detail.rate}%)</div>
+                    <div>${detail.interest} บาท</div>
+                `;
+                tierResultsContainer.appendChild(div);
+            });
+            
+            document.getElementById('tier-results').style.display = 'block';
+            document.getElementById('result').style.display = 'block';
+            
+            // เลื่อนไปยังผลลัพธ์
+            document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // ฟังก์ชันจัดรูปแบบเงิน
+        function formatCurrency(amount) {
+            return amount.toLocaleString('th-TH', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+        
+        // ตั้งค่าวันที่เริ่มต้นเป็นวันนี้
+        const today = new Date();
+        const formattedToday = today.toISOString().split('T')[0];
+        document.getElementById('start-date').value = formattedToday;
+        document.getElementById('start-date-tiered').value = formattedToday;
+        
+        // ตั้งค่าวันที่สิ้นสุดเป็น 30 วันจากวันนี้
+        const futureDate = new Date();
+        futureDate.setDate(today.getDate() + 30);
+        const formattedFutureDate = futureDate.toISOString().split('T')[0];
+        document.getElementById('end-date').value = formattedFutureDate;
+        document.getElementById('end-date-tiered').value = formattedFutureDate;
+        
+        // การจัดการอัตราดอกเบี้ยแบบหลายระดับ
+        document.getElementById('add-tier').addEventListener('click', () => {
+            const tierContainer = document.getElementById('tier-container');
+            const tierCount = tierContainer.children.length;
+            
+            const newRow = document.createElement('div');
+            newRow.className = 'tier-row';
+            newRow.innerHTML = `
+                <div class="tier-amount">
+                    <input type="number" class="tier-amount-from" placeholder="จาก" min="0" value="${tierCount > 0 ? tierContainer.lastElementChild.querySelector('.tier-amount-to').value : '0'}">
+                    <span>ถึง</span>
+                    <input type="number" class="tier-amount-to" placeholder="ถึง" min="0">
+                </div>
+                <div class="tier-rate">
+                    <input type="number" class="tier-rate-value" step="0.01" placeholder="อัตราดอกเบี้ย" min="0.01">
+                </div>
+                <button class="remove-tier"><i class="fas fa-times"></i></button>
+            `;
+            
+            tierContainer.appendChild(newRow);
+            
+            // เพิ่ม event listener สำหรับปุ่มลบ
+            newRow.querySelector('.remove-tier').addEventListener('click', () => {
+                newRow.remove();
+            });
+        });
+        
+        // เปิดใช้งานปุ่มลบสำหรับแถวแรกเมื่อมีหลายแถว
+        document.getElementById('tier-container').addEventListener('DOMSubtreeModified', () => {
+            const tierRows = document.querySelectorAll('.tier-row');
+            if (tierRows.length === 1) {
+                tierRows[0].querySelector('.remove-tier').disabled = true;
+            } else {
+                tierRows.forEach(row => {
+                    row.querySelector('.remove-tier').disabled = false;
+                });
+            }
+        });
+    </script>
+</body>
+</html>

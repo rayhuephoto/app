@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ตัวสร้างรหัสผ่าน</title>
+    <!-- Ant Design CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/antd@4.24.16/dist/antd.css">
+    <!-- Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .ant-form-item {
+            margin-bottom: 20px;
+        }
+
+        .ant-input-group {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .ant-input {
+            border-radius: 8px;
+        }
+
+        .ant-tabs-nav {
+            margin-bottom: 20px;
+        }
+        
+        #strength-meter .ant-progress-outer {
+            padding-right: 0;
+        }
+
+        #strength-meter .ant-progress-inner {
+            border-radius: 8px;
+        }
+
+        .ant-progress-success-bg {
+            background-color: #52c41a !important;
+        }
+
+        .ant-progress-bg {
+            background-color: #faad14 !important;
+        }
+
+        .ant-progress-exception-bg {
+            background-color: #ff4d4f !important;
+        }
+
+        .ant-btn-primary {
+            background-color: #1890ff;
+            border-color: #1890ff;
+            border-radius: 8px;
+        }
+
+        .ant-btn-primary:hover,
+        .ant-btn-primary:focus {
+            background-color: #40a9ff;
+            border-color: #40a9ff;
+        }
+
+        .strength-text {
+            margin-top: 10px;
+            font-weight: 500;
+        }
+
+        .security-info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f6ffed;
+            border: 1px solid #b7eb8f;
+            border-radius: 8px;
+            color: #389e0d;
+        }
+
+        .warning-info {
+            background-color: #fff1f0;
+            border: 1px solid #ffa39e;
+            color: #cf1322;
+        }
+
+        .ant-input-group-addon {
+            background-color: white;
+            border-radius: 8px 0 0 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>ตัวสร้างรหัสผ่าน</h1>
+        <div id="app"></div>
+    </div>
+
+    <!-- Ant Design and React Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/react@17.0.2/umd/react.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@17.0.2/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/antd@4.24.16/dist/antd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        const { Card, Form, Input, Button, Slider, Checkbox, Progress, Typography, message, Tabs } = antd;
+        const { Text } = Typography;
+        const { TabPane } = Tabs;
+
+        const App = () => {
+            const [password, setPassword] = useState('');
+            const [length, setLength] = useState(12);
+            const [includeUppercase, setIncludeUppercase] = useState(true);
+            const [includeNumbers, setIncludeNumbers] = useState(true);
+            const [includeSymbols, setIncludeSymbols] = useState(true);
+            const [strength, setStrength] = useState(0);
+            const [estimatedTime, setEstimatedTime] = useState('');
+            const [showWarning, setShowWarning] = useState(false);
+            const generatedPasswordRef = useRef(null);
+
+            // Function to generate a random password based on current settings
+            const generatePassword = () => {
+                let charset = "abcdefghijklmnopqrstuvwxyz";
+                if (includeUppercase) charset += "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                if (includeNumbers) charset += "0123456789";
+                if (includeSymbols) charset += "!@#$%^&*()_+~`|}{[]:;?><,./-=";
+
+                let newPassword = "";
+                for (let i = 0; i < length; i++) {
+                    newPassword += charset.charAt(Math.floor(Math.random() * charset.length));
+                }
+                setPassword(newPassword);
+            };
+
+            // Calculate strength score
+            const calculateStrength = (pwd) => {
+                let score = 0;
+                if (pwd.length > 0) {
+                    score += 10 * Math.log2(pwd.length) / Math.log2(16);
+                }
+                if (/[a-z]/.test(pwd)) score += 10;
+                if (/[A-Z]/.test(pwd)) score += 10;
+                if (/[0-9]/.test(pwd)) score += 10;
+                if (/[!@#$%^&*()_+~`|}{[\]:;?><,./-=]/.test(pwd)) score += 20;
+
+                const hasUpper = /[A-Z]/.test(pwd);
+                const hasLower = /[a-z]/.test(pwd);
+                const hasNumber = /[0-9]/.test(pwd);
+                const hasSymbol = /[!@#$%^&*()_+~`|}{[\]:;?><,./-=]/.test(pwd);
+
+                if (hasUpper && hasLower && hasNumber && hasSymbol && pwd.length >= 12) {
+                    score += 40;
+                } else if (hasUpper && hasLower && hasNumber && pwd.length >= 10) {
+                    score += 30;
+                } else if (hasUpper && hasLower && pwd.length >= 8) {
+                    score += 20;
+                }
+
+                return Math.min(100, Math.round(score));
+            };
+
+            // Calculate estimated time to crack
+            const calculateHackingTime = (pwd) => {
+                const entropy = calculateEntropy(pwd);
+                const guessesPerSecond = 10000000000; // 10 billion guesses per second
+                const totalGuesses = Math.pow(2, entropy);
+                const secondsToCrack = totalGuesses / guessesPerSecond;
+
+                if (secondsToCrack < 60) return `${secondsToCrack.toFixed(2)} วินาที`;
+                if (secondsToCrack < 3600) return `${(secondsToCrack / 60).toFixed(2)} นาที`;
+                if (secondsToCrack < 86400) return `${(secondsToCrack / 3600).toFixed(2)} ชั่วโมง`;
+                if (secondsToCrack < 31536000) return `${(secondsToCrack / 86400).toFixed(2)} วัน`;
+                if (secondsToCrack < 31536000000) return `${(secondsToCrack / 31536000).toFixed(2)} ปี`;
+                return `มากกว่า ${Math.round(secondsToCrack / 31536000000)} พันล้านปี`;
+            };
+
+            // Calculate entropy of the password
+            const calculateEntropy = (pwd) => {
+                let poolSize = 0;
+                const hasLower = /[a-z]/.test(pwd);
+                const hasUpper = /[A-Z]/.test(pwd);
+                const hasNumber = /[0-9]/.test(pwd);
+                const hasSymbol = /[!@#$%^&*()_+~`|}{[\]:;?><,./-=]/.test(pwd);
+                if (hasLower) poolSize += 26;
+                if (hasUpper) poolSize += 26;
+                if (hasNumber) poolSize += 10;
+                if (hasSymbol) poolSize += 32;
+
+                if (poolSize === 0) return 0;
+                return pwd.length * Math.log2(poolSize);
+            };
+
+            // Update strength and hacking time whenever the password changes
+            useEffect(() => {
+                if (password) {
+                    const newStrength = calculateStrength(password);
+                    setStrength(newStrength);
+                    setEstimatedTime(calculateHackingTime(password));
+                    setShowWarning(newStrength < 60);
+                } else {
+                    setStrength(0);
+                    setEstimatedTime('');
+                    setShowWarning(false);
+                }
+            }, [password]);
+            
+            // Initial password generation on app load
+            useEffect(() => {
+                generatePassword();
+            }, []);
+
+            const getStrengthStatus = (score) => {
+                if (score >= 80) return "success";
+                if (score >= 60) return "normal";
+                return "exception";
+            };
+
+            const getStrengthText = (score) => {
+                if (score >= 80) return "แข็งแกร่งมาก";
+                if (score >= 60) return "แข็งแกร่ง";
+                return "อ่อนแอ";
+            };
+
+            const handleCopy = () => {
+                if (generatedPasswordRef.current) {
+                    const passwordText = generatedPasswordRef.current.input.value;
+                    navigator.clipboard.writeText(passwordText)
+                        .then(() => {
+                            message.success('คัดลอกรหัสผ่านแล้ว!');
+                        })
+                        .catch(err => {
+                            // Fallback for older browsers
+                            const textArea = document.createElement("textarea");
+                            textArea.value = passwordText;
+                            document.body.appendChild(textArea);
+                            textArea.focus();
+                            textArea.select();
+                            try {
+                                document.execCommand('copy');
+                                message.success('คัดลอกรหัสผ่านแล้ว!');
+                            } catch (e) {
+                                message.error('ไม่สามารถคัดลอกได้');
+                            }
+                            document.body.removeChild(textArea);
+                        });
+                }
+            };
+            
+            return (
+                <Card bordered={false} style={{ width: '100%' }}>
+                    <Tabs defaultActiveKey="generator">
+                        <TabPane tab="สร้างรหัสผ่าน" key="generator">
+                            <Form layout="vertical">
+                                <Form.Item label="รหัสผ่านที่สร้าง">
+                                    <Input.Group compact>
+                                        <Input
+                                            value={password}
+                                            readOnly
+                                            size="large"
+                                            style={{ width: 'calc(100% - 70px)', borderTopRightRadius: 0, borderBottomRightRadius: 0 }}
+                                            ref={generatedPasswordRef}
+                                        />
+                                        <Button
+                                            size="large"
+                                            type="primary"
+                                            onClick={handleCopy}
+                                            style={{ width: '70px', borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
+                                        >
+                                            คัดลอก
+                                        </Button>
+                                    </Input.Group>
+                                </Form.Item>
+
+                                <Form.Item label="ความยาวของรหัสผ่าน">
+                                    <Slider
+                                        min={6}
+                                        max={32}
+                                        value={length}
+                                        onChange={setLength}
+                                        tipFormatter={value => `${value} ตัวอักษร`}
+                                    />
+                                </Form.Item>
+
+                                <Form.Item>
+                                    <Checkbox checked={includeUppercase} onChange={(e) => setIncludeUppercase(e.target.checked)}>
+                                        ตัวอักษรพิมพ์ใหญ่ (A-Z)
+                                    </Checkbox>
+                                    <br />
+                                    <Checkbox checked={includeNumbers} onChange={(e) => setIncludeNumbers(e.target.checked)}>
+                                        ตัวเลข (0-9)
+                                    </Checkbox>
+                                    <br />
+                                    <Checkbox checked={includeSymbols} onChange={(e) => setIncludeSymbols(e.target.checked)}>
+                                        สัญลักษณ์ (!@#$...)
+                                    </Checkbox>
+                                </Form.Item>
+
+                                <Form.Item>
+                                    <Button type="primary" block onClick={generatePassword} size="large" style={{ borderRadius: '8px' }}>
+                                        สร้างรหัสผ่านใหม่
+                                    </Button>
+                                </Form.Item>
+                            </Form>
+                        </TabPane>
+                        <TabPane tab="ตรวจสอบรหัสผ่าน" key="checker">
+                            <Form layout="vertical">
+                                <Form.Item label="กรอกรหัสผ่านของคุณ">
+                                    <Input.Password
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="รหัสผ่าน"
+                                        size="large"
+                                    />
+                                </Form.Item>
+                            </Form>
+                        </TabPane>
+                    </Tabs>
+                    
+                    {password && (
+                        <>
+                            <div className="strength-meter-container">
+                                <Form.Item label="ระดับความปลอดภัย" id="strength-meter">
+                                    <Progress percent={strength} status={getStrengthStatus(strength)} showInfo={false} />
+                                    <div className="strength-text" style={{ color: getStrengthStatus(strength) === 'success' ? '#52c41a' : getStrengthStatus(strength) === 'normal' ? '#faad14' : '#ff4d4f' }}>
+                                        {getStrengthText(strength)}
+                                    </div>
+                                </Form.Item>
+                            </div>
+                            <div className={`security-info ${showWarning ? 'warning-info' : ''}`}>
+                                <Text strong>เวลาที่ใช้ในการเจาะรหัสผ่านโดยเฉลี่ย:</Text>
+                                <Text>{estimatedTime}</Text>
+                                {showWarning && (
+                                    <div style={{ marginTop: '10px' }}>
+                                        <Text type="danger" strong>
+                                            คำเตือน: รหัสผ่านนี้มีความปลอดภัยต่ำ อาจถูกเจาะได้ง่าย
+                                        </Text>
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    )}
+                </Card>
+            );
+        };
+
+        ReactDOM.render(<App />, document.getElementById('app'));
+    </script>
+</body>
+</html>

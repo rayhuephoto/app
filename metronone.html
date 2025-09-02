@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>metronone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* dark background */
+        }
+        .container {
+            max-width: 600px;
+        }
+        .preset-btn.active, .time-sig-btn.active {
+            background-color: #059669; /* emerald-600 */
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="container bg-gray-800 p-8 rounded-2xl shadow-2xl space-y-8 text-center border border-gray-700">
+        <h2 class="text-4xl font-bold mb-6 text-emerald-400">metronone</h2>
+        
+        <!-- BPM Control Section -->
+        <div class="space-y-4">
+            <h2 class="text-2xl font-semibold text-gray-300">ความเร็ว (BPM)</h2>
+            <div class="flex items-center justify-center space-x-4">
+                <button id="bpm-down" class="bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-3xl font-bold w-12 h-12 rounded-full transition-colors">-</button>
+                <div id="bpm-display" class="text-6xl font-extrabold w-32 text-center text-white">120</div>
+                <button id="bpm-up" class="bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-3xl font-bold w-12 h-12 rounded-full transition-colors">+</button>
+            </div>
+        </div>
+
+        <!-- Time Signature Control Section (separated) -->
+        <div class="mt-6">
+            <h2 class="text-2xl font-semibold text-gray-300 mb-2">จังหวะ</h2>
+            <div id="beats-manual-controls" class="flex flex-col items-center space-y-4 hidden">
+                <div class="flex items-center space-x-2">
+                    <button id="beats-down" class="bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-2xl font-bold w-10 h-10 rounded-full transition-colors">-</button>
+                    <span id="beats-display" class="text-4xl font-extrabold text-white w-12 text-center">4</span>
+                    <button id="beats-up" class="bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-2xl font-bold w-10 h-10 rounded-full transition-colors">+</button>
+                </div>
+            </div>
+            
+            <div id="time-signature-buttons-container" class="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <button data-beats="2" class="time-sig-btn bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white py-2 px-4 rounded-lg transition-colors">2/4</button>
+                <button data-beats="3" class="time-sig-btn bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white py-2 px-4 rounded-lg transition-colors">3/4</button>
+                <button data-beats="4" class="time-sig-btn bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white py-2 px-4 rounded-lg transition-colors active">4/4</button>
+                <button data-beats="6" class="time-sig-btn bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white py-2 px-4 rounded-lg transition-colors">6/8</button>
+                <button data-beats="custom" class="time-sig-btn bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white py-2 px-4 rounded-lg transition-colors">กำหนดเอง</button>
+            </div>
+        </div>
+        
+        <!-- Beat Visualizer -->
+        <div class="flex justify-center flex-col items-center my-6 space-y-4">
+            <div id="beat-counter-display" class="text-6xl font-extrabold text-white">1</div>
+            <div id="beat-visualizer" class="flex justify-center space-x-4"></div>
+        </div>
+
+        <!-- Main Play and Reset Buttons -->
+        <div class="flex items-center justify-center space-x-4 mt-8">
+            <button id="play-btn" class="bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-white text-2xl font-bold py-4 px-12 rounded-full shadow-lg transition-colors transform active:scale-95">เริ่ม</button>
+            <button id="reset-btn" class="bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white text-2xl font-bold py-4 px-6 rounded-full shadow-lg transition-colors transform active:scale-95">รีเซ็ต</button>
+            <button id="mute-btn" class="flex flex-col items-center justify-center space-y-1 bg-gray-700 hover:bg-gray-600 active:bg-gray-500 p-4 rounded-xl transition-colors">
+                <svg id="mute-icon" class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.586L2.458 18.714a1.5 1.5 0 002.122 2.122l3.128-3.128M14.243 9.757l3.128-3.128a1.5 1.5 0 012.122 2.122l-3.128 3.128m-2.122-2.122a.5.5 0 010 .708l-5.657 5.657-2.121-2.121 5.657-5.657a.5.5 0 01.708 0z" />
+                </svg>
+                <span id="mute-text" class="text-sm">ปิดเสียง</span>
+            </button>
+        </div>
+
+        <!-- Preset Styles Buttons -->
+        <div class="mt-6">
+            <h2 class="text-lg font-medium text-gray-400 mb-2">รูปแบบเพลง</h2>
+            <div id="preset-buttons-container" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <button data-preset="default" class="preset-btn bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white py-2 px-4 rounded-lg transition-colors active">กำหนดเอง</button>
+                <button data-preset="rock" class="preset-btn bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white py-2 px-4 rounded-lg transition-colors">ร็อก</button>
+                <button data-preset="hiphop" class="preset-btn bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white py-2 px-4 rounded-lg transition-colors">ฮิปฮอป</button>
+                <button data-preset="funk" class="preset-btn bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white py-2 px-4 rounded-lg transition-colors">ฟังก์</button>
+                <button data-preset="waltz" class="preset-btn bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white py-2 px-4 rounded-lg transition-colors">วอลทซ์</button>
+                <button data-preset="salsa" class="preset-btn bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white py-2 px-4 rounded-lg transition-colors">ซัลซ่า</button>
+                
+                <button data-preset="larghissimo" class="preset-btn bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white py-2 px-4 rounded-lg transition-colors">Larghissimo</button>
+                <button data-preset="largo" class="preset-btn bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white py-2 px-4 rounded-lg transition-colors">Largo</button>
+                <button data-preset="adagio" class="preset-btn bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white py-2 px-4 rounded-lg transition-colors">Adagio</button>
+                <button data-preset="andante" class="preset-btn bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white py-2 px-4 rounded-lg transition-colors">Andante</button>
+                <button data-preset="moderato" class="preset-btn bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white py-2 px-4 rounded-lg transition-colors">Moderato</button>
+                <button data-preset="allegro" class="preset-btn bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white py-2 px-4 rounded-lg transition-colors">Allegro</button>
+                <button data-preset="vivace" class="preset-btn bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white py-2 px-4 rounded-lg transition-colors">Vivace</button>
+                <button data-preset="presto" class="preset-btn bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white py-2 px-4 rounded-lg transition-colors">Presto</button>
+                <button data-preset="prestissimo" class="preset-btn bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white py-2 px-4 rounded-lg transition-colors">Prestissimo</button>
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        // Global variables for the metronome state
+        let audioContext = null;
+        let isRunning = false;
+        let isMuted = false;
+        let bpm = 120;
+        let beatsPerMeasure = 4;
+        let currentBeat = 0;
+        let timerWorker = null;
+        let nextNoteTime = 0.0; // The time of the next note to play
+        const lookahead = 25.0; // How far ahead to look for notes (in milliseconds)
+        const scheduleAheadTime = 0.1; // How far ahead to schedule notes (in seconds)
+
+        // UI Elements
+        const bpmDisplay = document.getElementById('bpm-display');
+        const beatsDisplay = document.getElementById('beats-display');
+        const bpmUpBtn = document.getElementById('bpm-up');
+        const bpmDownBtn = document.getElementById('bpm-down');
+        const beatsUpBtn = document.getElementById('beats-up');
+        const beatsDownBtn = document.getElementById('beats-down');
+        const playBtn = document.getElementById('play-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const muteBtn = document.getElementById('mute-btn');
+        const muteIcon = document.getElementById('mute-icon');
+        const muteText = document.getElementById('mute-text');
+        const beatVisualizer = document.getElementById('beat-visualizer');
+        const beatCounterDisplay = document.getElementById('beat-counter-display');
+        const presetButtonsContainer = document.getElementById('preset-buttons-container');
+        const timeSigButtonsContainer = document.getElementById('time-signature-buttons-container');
+        const beatsManualControls = document.getElementById('beats-manual-controls');
+
+        // Function to update the beat visualizer based on the number of beats per measure
+        function updateVisualizer() {
+            beatVisualizer.innerHTML = '';
+            for (let i = 0; i < beatsPerMeasure; i++) {
+                const beatDiv = document.createElement('div');
+                beatDiv.classList.add('beat-dot', 'w-6', 'h-6', 'bg-gray-500', 'rounded-full', 'transition-colors', 'duration-150');
+                beatVisualizer.appendChild(beatDiv);
+            }
+        }
+
+        // Initialize the visualizer
+        updateVisualizer();
+        // Set the initial active button
+        document.querySelector('[data-preset="default"]').classList.add('active');
+        document.querySelector('[data-beats="4"]').classList.add('active');
+
+        // Function to create and play a tick sound
+        function playTick(time, isFirstBeat) {
+            if (isMuted) return;
+
+            const osc = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            osc.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            if (isFirstBeat) {
+                // Higher pitch and volume for the first beat
+                osc.frequency.setValueAtTime(880, time); // 880 Hz (A5)
+                gainNode.gain.setValueAtTime(1.0, time);
+            } else {
+                // Lower pitch and volume for subsequent beats
+                osc.frequency.setValueAtTime(440, time); // 440 Hz (A4)
+                gainNode.gain.setValueAtTime(0.5, time);
+            }
+
+            osc.start(time);
+            osc.stop(time + 0.05); // Play for 50ms
+        }
+
+        // Function to schedule the next note
+        function scheduler() {
+            while (nextNoteTime < audioContext.currentTime + scheduleAheadTime) {
+                // Calculate which beat we are on
+                const isFirstBeat = (currentBeat === 0);
+                
+                // Play the tick sound
+                playTick(nextNoteTime, isFirstBeat);
+                
+                // Update the visualizer
+                updateBeatVisualizer(isFirstBeat);
+
+                // Advance the beat
+                currentBeat = (currentBeat + 1) % beatsPerMeasure;
+
+                // Set the time for the next note
+                const secondsPerBeat = 60.0 / bpm;
+                nextNoteTime += secondsPerBeat;
+            }
+        }
+        
+        // Function to update the visual beat indicators
+        function updateBeatVisualizer(isFirstBeat) {
+            const dots = document.querySelectorAll('.beat-dot');
+            if (dots.length === 0) return;
+            
+            // Reset all dots to their default color
+            dots.forEach(dot => dot.classList.remove('bg-emerald-400', 'bg-red-500'));
+            
+            // Highlight the current beat and update the number
+            const beatIndex = isFirstBeat ? 0 : currentBeat;
+            dots[beatIndex].classList.add(isFirstBeat ? 'bg-red-500' : 'bg-emerald-400');
+            
+            beatCounterDisplay.textContent = beatIndex + 1;
+        }
+
+        // Main metronome start/stop logic
+        function toggleMetronome() {
+            if (!audioContext) {
+                // Create audio context only when needed
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            if (!isRunning) {
+                isRunning = true;
+                playBtn.textContent = 'หยุด';
+                playBtn.classList.remove('bg-emerald-500');
+                playBtn.classList.add('bg-red-500');
+                nextNoteTime = audioContext.currentTime;
+                // Start the timer worker
+                if (timerWorker) {
+                    timerWorker.terminate();
+                }
+                timerWorker = new Worker(URL.createObjectURL(new Blob(['(', function() {
+                    let timerID = null;
+                    self.onmessage = function(e) {
+                        if (e.data === 'start') {
+                            timerID = setInterval(() => self.postMessage('tick'), 25);
+                        } else if (e.data === 'stop') {
+                            clearInterval(timerID);
+                            timerID = null;
+                        }
+                    };
+                }.toString(), ')()'])));
+                
+                timerWorker.onmessage = (e) => {
+                    if (e.data === 'tick') {
+                        scheduler();
+                    }
+                };
+                timerWorker.postMessage('start');
+            } else {
+                isRunning = false;
+                playBtn.textContent = 'เริ่ม';
+                playBtn.classList.remove('bg-red-500');
+                playBtn.classList.add('bg-emerald-500');
+                if (timerWorker) {
+                    timerWorker.postMessage('stop');
+                }
+                
+                // Reset visualizer and current beat
+                currentBeat = 0;
+                updateVisualizer();
+                beatCounterDisplay.textContent = '1';
+            }
+        }
+
+        // Event Listeners
+        playBtn.addEventListener('click', toggleMetronome);
+        resetBtn.addEventListener('click', () => {
+            if (isRunning) {
+                toggleMetronome();
+            }
+            // Reset all values to default
+            bpm = 120;
+            beatsPerMeasure = 4;
+            bpmDisplay.textContent = bpm;
+            beatsDisplay.textContent = beatsPerMeasure;
+            updateVisualizer();
+            beatCounterDisplay.textContent = '1';
+            
+            // Reset active state for buttons
+            document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('[data-preset="default"]').classList.add('active');
+            
+            document.querySelectorAll('.time-sig-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('[data-beats="4"]').classList.add('active');
+            
+            // Hide manual controls
+            beatsManualControls.style.display = 'none';
+        });
+
+        bpmUpBtn.addEventListener('click', () => {
+            if (bpm < 240) {
+                bpm++;
+                bpmDisplay.textContent = bpm;
+                if (isRunning) toggleMetronome();
+                if (isRunning) toggleMetronome();
+            }
+        });
+
+        bpmDownBtn.addEventListener('click', () => {
+            if (bpm > 40) {
+                bpm--;
+                bpmDisplay.textContent = bpm;
+                if (isRunning) toggleMetronome();
+                if (isRunning) toggleMetronome();
+            }
+        });
+
+        // Event listener for beats-up/down buttons for custom mode
+        beatsUpBtn.addEventListener('click', () => {
+            if (beatsPerMeasure < 12) {
+                beatsPerMeasure++;
+                beatsDisplay.textContent = beatsPerMeasure;
+                updateVisualizer();
+                // If running, stop and restart
+                if (isRunning) toggleMetronome();
+                if (isRunning) toggleMetronome();
+            }
+        });
+
+        beatsDownBtn.addEventListener('click', () => {
+            if (beatsPerMeasure > 1) {
+                beatsPerMeasure--;
+                beatsDisplay.textContent = beatsPerMeasure;
+                updateVisualizer();
+                // If running, stop and restart
+                if (isRunning) toggleMetronome();
+                if (isRunning) toggleMetronome();
+            }
+        });
+
+        muteBtn.addEventListener('click', () => {
+            isMuted = !isMuted;
+            muteText.textContent = isMuted ? 'เปิดเสียง' : 'ปิดเสียง';
+            muteIcon.classList.toggle('text-gray-400');
+            muteIcon.classList.toggle('text-white');
+            muteBtn.classList.toggle('bg-gray-700');
+            muteBtn.classList.toggle('bg-emerald-500');
+        });
+
+        // Event listener for preset buttons
+        presetButtonsContainer.addEventListener('click', (event) => {
+            const button = event.target.closest('button');
+            if (!button || !button.dataset.preset) return;
+
+            // Remove active class from all preset buttons
+            document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+
+            if (isRunning) toggleMetronome();
+
+            switch (button.dataset.preset) {
+                case 'larghissimo':
+                    bpm = 24;
+                    beatsPerMeasure = 4;
+                    break;
+                case 'largo':
+                    bpm = 50;
+                    beatsPerMeasure = 4;
+                    break;
+                case 'adagio':
+                    bpm = 65;
+                    beatsPerMeasure = 4;
+                    break;
+                case 'andante':
+                    bpm = 85;
+                    beatsPerMeasure = 4;
+                    break;
+                case 'moderato':
+                    bpm = 100;
+                    beatsPerMeasure = 4;
+                    break;
+                case 'allegro':
+                    bpm = 120;
+                    beatsPerMeasure = 4;
+                    break;
+                case 'vivace':
+                    bpm = 145;
+                    beatsPerMeasure = 4;
+                    break;
+                case 'presto':
+                    bpm = 180;
+                    beatsPerMeasure = 4;
+                    break;
+                case 'prestissimo':
+                    bpm = 210;
+                    beatsPerMeasure = 4;
+                    break;
+                case 'rock':
+                    bpm = 120;
+                    beatsPerMeasure = 4;
+                    break;
+                case 'hiphop':
+                    bpm = 90;
+                    beatsPerMeasure = 4;
+                    break;
+                case 'funk':
+                    bpm = 100;
+                    beatsPerMeasure = 4;
+                    break;
+                case 'waltz':
+                    bpm = 90;
+                    beatsPerMeasure = 3;
+                    break;
+                case 'salsa':
+                    bpm = 180;
+                    beatsPerMeasure = 4;
+                    break;
+                case 'default':
+                default:
+                    // Do nothing, keep current values
+                    return;
+            }
+
+            bpmDisplay.textContent = bpm;
+            beatsDisplay.textContent = beatsPerMeasure;
+            updateVisualizer();
+            
+            if (isRunning) toggleMetronome();
+        });
+
+        // Event listener for time signature buttons
+        timeSigButtonsContainer.addEventListener('click', (event) => {
+            const button = event.target.closest('button');
+            if (!button || !button.dataset.beats) return;
+
+            // Remove active class from all time signature buttons
+            document.querySelectorAll('.time-sig-btn').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            
+            // Hide/show manual controls
+            if (button.dataset.beats === 'custom') {
+                beatsManualControls.style.display = 'block';
+            } else {
+                beatsManualControls.style.display = 'none';
+                const newBeats = parseInt(button.dataset.beats);
+                if (!isNaN(newBeats)) {
+                    beatsPerMeasure = newBeats;
+                    beatsDisplay.textContent = beatsPerMeasure;
+                }
+            }
+
+            updateVisualizer();
+
+            // If running, stop and restart
+            if (isRunning) toggleMetronome();
+            if (isRunning) toggleMetronome();
+        });
+
+        // Set the initial state of manual controls to hidden
+        beatsManualControls.style.display = 'none';
+    </script>
+</body>
+</html>
