@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circle of Fifths (Linear) - Interactive Music Theory Tool</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- ==================== CSS ==================== -->
+    <style>
+        :root {
+            --primary-color-major: #f39c12; /* Orange */
+            --secondary-color-major: #e67e22;
+            --text-color-major: #2c3e50;
+            
+            --primary-color-minor: #3498db; /* Blue */
+            --secondary-color-minor: #2980b9;
+            --text-color-minor: #ecf0f1;
+
+            --bg-color: #2c3e50;
+            --panel-bg: #34495e;
+            --text-color: #ecf0f1;
+            --border-color: #7f8c8d;
+            --active-shadow: 0 0 15px rgba(241, 196, 15, 0.7);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #f1c40f;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            color: var(--border-color);
+        }
+
+        /* Circle of Fifths Section */
+        #circle-of-fifths {
+            margin-bottom: 40px;
+        }
+
+        .key-row {
+            margin-bottom: 20px;
+        }
+
+        .key-row h3 {
+            margin-bottom: 10px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .keys-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .key-button {
+            padding: 12px 20px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: #555;
+            color: #ccc;
+        }
+
+        .major-keys .key-button {
+            background-color: var(--primary-color-major);
+            color: var(--text-color-major);
+            border-color: var(--secondary-color-major);
+        }
+
+        .major-keys .key-button:hover {
+            background-color: var(--secondary-color-major);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+        }
+
+        .minor-keys .key-button {
+            background-color: var(--primary-color-minor);
+            color: var(--text-color-minor);
+            border-color: var(--secondary-color-minor);
+        }
+
+        .minor-keys .key-button:hover {
+            background-color: var(--secondary-color-minor);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+        }
+
+        .key-button.active {
+            background-color: #f1c40f; /* Highlight color */
+            color: var(--bg-color);
+            border-color: #f1c40f;
+            transform: scale(1.1);
+            box-shadow: var(--active-shadow);
+        }
+
+        /* Display Panel */
+        #display-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .info-card {
+            background-color: var(--panel-bg);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .info-card h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #f1c40f;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        #selected-key-display, #relative-key-display {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 5px;
+        }
+
+        /* Chords in Key - Dynamic Thematic Colors */
+        #chords-in-key-display {
+            transition: all 0.4s ease;
+        }
+
+        .chord-row {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .chord-box {
+            padding: 8px 12px;
+            background-color: #555; /* Default fallback */
+            border-radius: 5px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            min-width: 50px;
+            text-align: center;
+            transition: background-color 0.4s ease;
+        }
+
+        /* --- MAJOR KEY THEME --- */
+        .theme-major .chord-primary { background-color: #f1c40f; color: #2c3e50; } /* I, IV, V - Bright Yellow */
+        .theme-major .chord-secondary { background-color: #d68910; } /* ii, iii, vi - Dark Orange */
+        .theme-major .chord-diminished { background-color: #935116; } /* vii° - Very Dark Orange */
+
+        /* --- MINOR KEY THEME --- */
+        .theme-minor .chord-primary { background-color: #3498db; } /* i, iv, v - Primary Blue */
+        .theme-minor .chord-secondary { background-color: #85c1e9; color: #1a252f; } /* III, VI, VII - Light Blue */
+        .theme-minor .chord-diminished { background-color: #1b4f72; } /* ii° - Dark Blue */
+
+        /* Progressions */
+        #progressions-display {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        #progressions-display li {
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 5px;
+            border-left: 4px solid #f1c40f;
+        }
+
+        /* Scale Degrees */
+        #scale-degrees-display {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+        }
+
+        .degree-item {
+            text-align: center;
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .degree-number {
+            font-size: 0.8rem;
+            color: var(--border-color);
+        }
+
+        .degree-note {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #f1c40f;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+            .keys-container {
+                gap: 5px;
+            }
+            .key-button {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+            #display-panel {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Circle of Fifths (Linear)</h1>
+            <p>เลือกคีย์เพื่อดูข้อมูลที่เกี่ยวข้องทั้งหมด</p>
+        </header>
+
+        <main>
+            <section id="circle-of-fifths">
+                <div class="key-row major-keys">
+                    <h3>Major Keys</h3>
+                    <div class="keys-container">
+                        <!-- Major keys will be generated by JS -->
+                    </div>
+                </div>
+                <div class="key-row minor-keys">
+                    <h3>Minor Keys</h3>
+                    <div class="keys-container">
+                        <!-- Minor keys will be generated by JS -->
+                    </div>
+                </div>
+            </section>
+
+            <section id="display-panel">
+                <div class="info-card">
+                    <h2>Selected Key</h2>
+                    <p id="selected-key-display">กรุณาเลือกคีย์จากด้านบน</p>
+                </div>
+
+                <div class="info-card">
+                    <h2>Relative Key</h2>
+                    <p id="relative-key-display">-</p>
+                </div>
+
+                <div class="info-card">
+                    <h2>Chords in Key</h2>
+                    <div id="chords-in-key-display">
+                        <div class="chord-row" id="primary-chords"></div>
+                        <div class="chord-row" id="secondary-chords"></div>
+                        <div class="chord-row" id="diminished-chord"></div>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <h2>Common Chord Progressions</h2>
+                    <ul id="progressions-display">
+                        <li>เลือกคีย์ก่อน</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h2>Scale Degrees</h2>
+                    <div id="scale-degrees-display">
+                        <p>เลือกคีย์ก่อน</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ==================== JAVASCRIPT ==================== -->
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // --- DATA ---
+        const circleOfFifths = [
+            { major: 'C', minor: 'Am', signature: '' },
+            { major: 'G', minor: 'Em', signature: '1#' },
+            { major: 'D', minor: 'Bm', signature: '2#' },
+            { major: 'A', minor: 'F#m', signature: '3#' },
+            { major: 'E', minor: 'C#m', signature: '4#' },
+            { major: 'B', minor: 'G#m', signature: '5#' },
+            { major: 'F#', minor: 'D#m', signature: '6#' },
+            { major: 'C#', minor: 'A#m', signature: '7#' },
+            { major: 'Cb', minor: 'Abm', signature: '7b' }, // Enharmonic
+            { major: 'Gb', minor: 'Ebm', signature: '6b' },
+            { major: 'Db', minor: 'Bbm', signature: '5b' },
+            { major: 'Ab', minor: 'Fm', signature: '4b' },
+            { major: 'Eb', minor: 'Cm', signature: '3b' },
+            { major: 'Bb', minor: 'Gm', signature: '2b' },
+            { major: 'F', minor: 'Dm', signature: '1b' },
+        ];
+
+        const chromaticScaleSharps = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        const chromaticScaleFlats = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+        const majorChordQualities = ['Major', 'minor', 'minor', 'Major', 'Major', 'minor', 'diminished'];
+        const minorChordQualities = ['minor', 'diminished', 'Major', 'minor', 'minor', 'Major', 'Major'];
+        const commonProgressions = [
+            { name: 'Pop / Country', numerals: ['I', 'V', 'vi', 'IV'] },
+            { name: 'Classic Rock', numerals: ['I', 'IV', 'V'] },
+            { name: '50s Progression', numerals: ['I', 'vi', 'IV', 'V'] },
+            { name: 'Jazz', numerals: ['ii', 'V', 'I'] },
+            { name: 'Blues', numerals: ['I', 'IV', 'V'] },
+            { name: 'Minor Pop', numerals: ['vi', 'IV', 'I', 'V'] },
+            { name: 'Four Chord Song', numerals: ['I', 'V', 'vi', 'iii'] }
+        ];
+        const scaleDegreeNames = ['I (Tonic)', 'ii (Supertonic)', 'iii (Mediant)', 'IV (Subdominant)', 'V (Dominant)', 'vi (Submediant)', 'vii° (Leading Tone)'];
+        const scaleDegreeNamesMinor = ['i (Tonic)', 'ii° (Supertonic)', 'III (Mediant)', 'iv (Subdominant)', 'v (Dominant)', 'VI (Submediant)', 'VII (Subtonic)'];
+
+        // --- DOM ELEMENTS ---
+        const majorKeysContainer = document.querySelector('.major-keys .keys-container');
+        const minorKeysContainer = document.querySelector('.minor-keys .keys-container');
+        const selectedKeyDisplay = document.getElementById('selected-key-display');
+        const relativeKeyDisplay = document.getElementById('relative-key-display');
+        const primaryChordsDisplay = document.getElementById('primary-chords');
+        const secondaryChordsDisplay = document.getElementById('secondary-chords');
+        const diminishedChordDisplay = document.getElementById('diminished-chord');
+        const progressionsDisplay = document.getElementById('progressions-display');
+        const scaleDegreesDisplay = document.getElementById('scale-degrees-display');
+        const chordsInKeyDisplay = document.getElementById('chords-in-key-display'); // Added for theme
+
+        // --- INITIALIZATION ---
+        function initializeApp() {
+            createKeyButtons();
+            document.getElementById('circle-of-fifths').addEventListener('click', handleKeyClick);
+        }
+
+        // --- CORE FUNCTIONS ---
+        function createKeyButtons() {
+            circleOfFifths.forEach(keyData => {
+                const majorBtn = document.createElement('button');
+                majorBtn.classList.add('key-button');
+                majorBtn.textContent = keyData.major;
+                majorBtn.dataset.key = `${keyData.major} Major`;
+                majorKeysContainer.appendChild(majorBtn);
+
+                const minorBtn = document.createElement('button');
+                minorBtn.classList.add('key-button');
+                minorBtn.textContent = keyData.minor;
+                minorBtn.dataset.key = `${keyData.minor} Minor`;
+                minorKeysContainer.appendChild(minorBtn);
+            });
+        }
+
+        function handleKeyClick(event) {
+            if (event.target.classList.contains('key-button')) {
+                const selectedKey = event.target.dataset.key;
+                document.querySelectorAll('.key-button').forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+                updateDisplay(selectedKey);
+            }
+        }
+
+        function updateDisplay(key) {
+            const keyData = findKeyData(key);
+            if (!keyData) return;
+
+            const isMajor = key.includes('Major');
+            // FIX: Remove the 'm' from the minor root note before generating the scale.
+            const rootNote = isMajor ? keyData.major : keyData.minor.replace('m', '');
+            const relativeKey = isMajor ? `${keyData.minor} Minor` : `${keyData.major} Major`;
+
+            selectedKeyDisplay.textContent = key;
+            relativeKeyDisplay.textContent = relativeKey;
+
+            // Set theme for chords
+            chordsInKeyDisplay.classList.remove('theme-major', 'theme-minor');
+            chordsInKeyDisplay.classList.add(isMajor ? 'theme-major' : 'theme-minor');
+
+            const scale = generateScale(rootNote, isMajor);
+            const chords = generateChordsInKey(scale, isMajor);
+            displayChords(chords);
+
+            const progressions = generateProgressions(chords, isMajor);
+            displayProgressions(progressions);
+
+            displayScaleDegrees(scale, isMajor);
+        }
+
+        function findKeyData(keyString) {
+            const keyName = keyString.split(' ')[0];
+            return circleOfFifths.find(k => k.major === keyName || k.minor === keyName);
+        }
+
+        function generateScale(root, isMajor) {
+            const keyData = findKeyData(`${root} ${isMajor ? 'Major' : 'Minor'}`);
+            const useFlats = keyData && keyData.signature.includes('b');
+            const chromaticScale = useFlats ? chromaticScaleFlats : chromaticScaleSharps;
+            const intervals = isMajor ? [0, 2, 4, 5, 7, 9, 11] : [0, 2, 3, 5, 7, 8, 10];
+            const rootIndex = chromaticScale.indexOf(root);
+            if (rootIndex === -1) return []; // Should not happen with our data
+            const scale = [];
+            intervals.forEach(interval => {
+                const noteIndex = (rootIndex + interval) % 12;
+                scale.push(chromaticScale[noteIndex]);
+            });
+            return scale;
+        }
+
+        function generateChordsInKey(scale, isMajor) {
+            const qualities = isMajor ? majorChordQualities : minorChordQualities;
+            return scale.map((note, index) => {
+                const romanNumeral = isMajor ? ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°'][index] : ['i', 'ii°', 'III', 'iv', 'v', 'VI', 'VII'][index];
+                return { note, quality: qualities[index], roman: romanNumeral };
+            });
+        }
+        
+        function displayChords(chords) {
+            primaryChordsDisplay.innerHTML = '';
+            secondaryChordsDisplay.innerHTML = '';
+            diminishedChordDisplay.innerHTML = '';
+
+            chords.forEach((chord, index) => {
+                const chordBox = document.createElement('div');
+                chordBox.classList.add('chord-box');
+                
+                // Determine function class for theming
+                let functionClass = '';
+                if (index === 0 || index === 3 || index === 4) { // I, IV, V
+                    functionClass = 'chord-primary';
+                } else if (index === 6) { // vii°
+                    functionClass = 'chord-diminished';
+                } else { // ii, iii, vi
+                    functionClass = 'chord-secondary';
+                }
+                chordBox.classList.add(functionClass);
+
+                chordBox.textContent = `${chord.note} ${chord.quality}`;
+
+                if (functionClass === 'chord-primary') {
+                    primaryChordsDisplay.appendChild(chordBox);
+                } else if (functionClass === 'chord-diminished') {
+                    diminishedChordDisplay.appendChild(chordBox);
+                } else {
+                    secondaryChordsDisplay.appendChild(chordBox);
+                }
+            });
+        }
+
+        function generateProgressions(chords, isMajor) {
+            return commonProgressions.map(prog => {
+                const chordNames = prog.numerals.map(numeral => {
+                    const chord = chords.find(c => c.roman === numeral);
+                    return chord ? `${chord.note} ${chord.quality}` : numeral;
+                });
+                return { name: prog.name, chords: chordNames.join(' - ') };
+            });
+        }
+
+        function displayProgressions(progressions) {
+            progressionsDisplay.innerHTML = '';
+            progressions.forEach(prog => {
+                const li = document.createElement('li');
+                li.innerHTML = `<strong>${prog.name}:</strong> ${prog.chords}`;
+                progressionsDisplay.appendChild(li);
+            });
+        }
+
+        function displayScaleDegrees(scale, isMajor) {
+            scaleDegreesDisplay.innerHTML = '';
+            const degreeNames = isMajor ? scaleDegreeNames : scaleDegreeNamesMinor;
+            scale.forEach((note, index) => {
+                const item = document.createElement('div');
+                item.classList.add('degree-item');
+                item.innerHTML = `
+                    <div class="degree-number">${degreeNames[index]}</div>
+                    <div class="degree-note">${note}</div>
+                `;
+                scaleDegreesDisplay.appendChild(item);
+            });
+        }
+
+        // --- START THE APP ---
+        initializeApp();
+    });
+    </script>
+</body>
+</html>
