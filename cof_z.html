@@ -10,20 +10,33 @@
     
     <!-- ==================== CSS ==================== -->
     <style>
+        /* --- CSS Variables for Theming --- */
         :root {
-            --primary-color-major: #f39c12; /* Orange */
-            --secondary-color-major: #e67e22;
-            --text-color-major: #2c3e50;
-            
-            --primary-color-minor: #3498db; /* Blue */
-            --secondary-color-minor: #2980b9;
-            --text-color-minor: #ecf0f1;
-
+            /* Dark Mode (Default) */
             --bg-color: #2c3e50;
             --panel-bg: #34495e;
             --text-color: #ecf0f1;
             --border-color: #7f8c8d;
+            --header-bg: rgba(44, 62, 80, 0.8);
             --active-shadow: 0 0 15px rgba(241, 196, 15, 0.7);
+
+            /* Key Colors */
+            --primary-color-major: #f39c12;
+            --secondary-color-major: #e67e22;
+            --text-color-major: #2c3e50;
+            --primary-color-minor: #3498db;
+            --secondary-color-minor: #2980b9;
+            --text-color-minor: #ecf0f1;
+            
+            /* Chord Colors */
+            --chord-major-primary-bg: #f1c40f;
+            --chord-major-primary-text: #2c3e50;
+            --chord-major-secondary-bg: #d68910;
+            --chord-major-diminished-bg: #935116;
+            --chord-minor-primary-bg: #3498db;
+            --chord-minor-secondary-bg: #85c1e9;
+            --chord-minor-secondary-text: #1a252f;
+            --chord-minor-diminished-bg: #1b4f72;
         }
 
         * {
@@ -48,6 +61,10 @@
         header {
             text-align: center;
             margin-bottom: 40px;
+            background-color: var(--header-bg);
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
         }
 
         header h1 {
@@ -121,7 +138,7 @@
         }
 
         .key-button.active {
-            background-color: #f1c40f; /* Highlight color */
+            background-color: #f1c40f;
             color: var(--bg-color);
             border-color: #f1c40f;
             transform: scale(1.1);
@@ -157,8 +174,9 @@
             font-weight: 700;
             text-align: center;
             padding: 10px;
-            background: rgba(0,0,0,0.2);
+            background: rgba(0,0,0,0.1);
             border-radius: 5px;
+            color: var(--text-color);
         }
 
         /* Chords in Key - Dynamic Thematic Colors */
@@ -175,7 +193,7 @@
 
         .chord-box {
             padding: 8px 12px;
-            background-color: #555; /* Default fallback */
+            background-color: #555;
             border-radius: 5px;
             font-weight: 600;
             font-size: 0.9rem;
@@ -185,14 +203,14 @@
         }
 
         /* --- MAJOR KEY THEME --- */
-        .theme-major .chord-primary { background-color: #f1c40f; color: #2c3e50; } /* I, IV, V - Bright Yellow */
-        .theme-major .chord-secondary { background-color: #d68910; } /* ii, iii, vi - Dark Orange */
-        .theme-major .chord-diminished { background-color: #935116; } /* vii° - Very Dark Orange */
+        .theme-major .chord-primary { background-color: var(--chord-major-primary-bg); color: var(--chord-major-primary-text); }
+        .theme-major .chord-secondary { background-color: var(--chord-major-secondary-bg); }
+        .theme-major .chord-diminished { background-color: var(--chord-major-diminished-bg); }
 
         /* --- MINOR KEY THEME --- */
-        .theme-minor .chord-primary { background-color: #3498db; } /* i, iv, v - Primary Blue */
-        .theme-minor .chord-secondary { background-color: #85c1e9; color: #1a252f; } /* III, VI, VII - Light Blue */
-        .theme-minor .chord-diminished { background-color: #1b4f72; } /* ii° - Dark Blue */
+        .theme-minor .chord-primary { background-color: var(--chord-minor-primary-bg); }
+        .theme-minor .chord-secondary { background-color: var(--chord-minor-secondary-bg); color: var(--chord-minor-secondary-text); }
+        .theme-minor .chord-diminished { background-color: var(--chord-minor-diminished-bg); }
 
         /* Progressions */
         #progressions-display {
@@ -201,7 +219,7 @@
         }
 
         #progressions-display li {
-            background: rgba(0,0,0,0.2);
+            background: rgba(0,0,0,0.1);
             padding: 10px;
             margin-bottom: 8px;
             border-radius: 5px;
@@ -217,7 +235,7 @@
 
         .degree-item {
             text-align: center;
-            background: rgba(0,0,0,0.2);
+            background: rgba(0,0,0,0.1);
             padding: 10px;
             border-radius: 5px;
         }
@@ -317,6 +335,7 @@
     document.addEventListener('DOMContentLoaded', () => {
 
         // --- DATA ---
+        // UPDATED: Now contains only the 12 most common keys.
         const circleOfFifths = [
             { major: 'C', minor: 'Am', signature: '' },
             { major: 'G', minor: 'Em', signature: '1#' },
@@ -324,11 +343,8 @@
             { major: 'A', minor: 'F#m', signature: '3#' },
             { major: 'E', minor: 'C#m', signature: '4#' },
             { major: 'B', minor: 'G#m', signature: '5#' },
-            { major: 'F#', minor: 'D#m', signature: '6#' },
-            { major: 'C#', minor: 'A#m', signature: '7#' },
-            { major: 'Cb', minor: 'Abm', signature: '7b' }, // Enharmonic
-            { major: 'Gb', minor: 'Ebm', signature: '6b' },
-            { major: 'Db', minor: 'Bbm', signature: '5b' },
+            { major: 'F#', minor: 'D#m', signature: '6#' }, // F# is used instead of Gb
+            { major: 'Db', minor: 'Bbm', signature: '5b' }, // Db is used instead of C#
             { major: 'Ab', minor: 'Fm', signature: '4b' },
             { major: 'Eb', minor: 'Cm', signature: '3b' },
             { major: 'Bb', minor: 'Gm', signature: '2b' },
@@ -361,7 +377,7 @@
         const diminishedChordDisplay = document.getElementById('diminished-chord');
         const progressionsDisplay = document.getElementById('progressions-display');
         const scaleDegreesDisplay = document.getElementById('scale-degrees-display');
-        const chordsInKeyDisplay = document.getElementById('chords-in-key-display'); // Added for theme
+        const chordsInKeyDisplay = document.getElementById('chords-in-key-display');
 
         // --- INITIALIZATION ---
         function initializeApp() {
@@ -400,14 +416,12 @@
             if (!keyData) return;
 
             const isMajor = key.includes('Major');
-            // FIX: Remove the 'm' from the minor root note before generating the scale.
             const rootNote = isMajor ? keyData.major : keyData.minor.replace('m', '');
             const relativeKey = isMajor ? `${keyData.minor} Minor` : `${keyData.major} Major`;
 
             selectedKeyDisplay.textContent = key;
             relativeKeyDisplay.textContent = relativeKey;
 
-            // Set theme for chords
             chordsInKeyDisplay.classList.remove('theme-major', 'theme-minor');
             chordsInKeyDisplay.classList.add(isMajor ? 'theme-major' : 'theme-minor');
 
@@ -432,7 +446,7 @@
             const chromaticScale = useFlats ? chromaticScaleFlats : chromaticScaleSharps;
             const intervals = isMajor ? [0, 2, 4, 5, 7, 9, 11] : [0, 2, 3, 5, 7, 8, 10];
             const rootIndex = chromaticScale.indexOf(root);
-            if (rootIndex === -1) return []; // Should not happen with our data
+            if (rootIndex === -1) return [];
             const scale = [];
             intervals.forEach(interval => {
                 const noteIndex = (rootIndex + interval) % 12;
@@ -458,13 +472,12 @@
                 const chordBox = document.createElement('div');
                 chordBox.classList.add('chord-box');
                 
-                // Determine function class for theming
                 let functionClass = '';
-                if (index === 0 || index === 3 || index === 4) { // I, IV, V
+                if (index === 0 || index === 3 || index === 4) {
                     functionClass = 'chord-primary';
-                } else if (index === 6) { // vii°
+                } else if (index === 6) {
                     functionClass = 'chord-diminished';
-                } else { // ii, iii, vi
+                } else {
                     functionClass = 'chord-secondary';
                 }
                 chordBox.classList.add(functionClass);
