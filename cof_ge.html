@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>วงกลมลิเนียร์แห่งคู่ห้า (Linear Circle of Fifths)</title>
+    <!-- โหลด Tailwind CSS สำหรับการจัดสไตล์ -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- กำหนดค่าเริ่มต้นของ Tailwind CSS และใช้ Font Inter -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'major-key': '#00A896', // Teal
+                        'minor-key': '#5E548E', // Indigo
+                        'major-bg': '#E0FBFC',
+                        'minor-bg': '#EFECEE',
+                        'accent': '#FCCA46', // Yellow
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* สไตล์พื้นฐานเพื่อให้ดูดีบนทุกอุปกรณ์ */
+        body {
+            background-color: #f7f9fb;
+            color: #1e1e1e;
+        }
+        /* สไตล์สำหรับปุ่มที่ถูกเลือก */
+        .key-selected {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transform: scale(1.05);
+            border-width: 4px;
+        }
+        /* สไตล์สำหรับส่วนผลลัพธ์ */
+        .result-card {
+            transition: all 0.3s ease;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="font-sans p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl md:text-4xl font-extrabold text-center mb-6 text-gray-800">
+            วงกลมลิเนียร์แห่งคู่ห้า (Linear Circle of Fifths)
+        </h1>
+        <p class="text-center text-gray-500 mb-8">
+            เลือกคีย์หลัก (Major) หรือคีย์รอง (Minor) เพื่อดูคอร์ดและทฤษฎีในคีย์นั้น
+        </p>
+
+        <!-- ส่วนการเลือกคีย์ -->
+        <div class="bg-white p-6 md:p-8 rounded-xl shadow-2xl mb-8 border border-gray-100">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">แถวที่ 1: คีย์หลัก (Major Keys)</h2>
+            <div id="major-keys-container" class="flex flex-wrap justify-center gap-3 md:gap-4 mb-6">
+                <!-- ปุ่มคีย์หลักจะถูกสร้างโดย JavaScript -->
+            </div>
+
+            <div class="h-px bg-gray-200 my-6"></div>
+
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">แถวที่ 2: คีย์รอง (Minor Keys)</h2>
+            <div id="minor-keys-container" class="flex flex-wrap justify-center gap-3 md:gap-4">
+                <!-- ปุ่มคีย์รองจะถูกสร้างโดย JavaScript -->
+            </div>
+        </div>
+
+        <!-- ส่วนผลลัพธ์การวิเคราะห์คีย์ -->
+        <div id="results-area" class="result-card bg-white p-6 md:p-8 rounded-xl shadow-2xl border-t-8 border-accent hidden">
+            <h2 id="current-key-display" class="text-3xl font-bold text-gray-800 mb-6"></h2>
+
+            <!-- Relative Key และ Scale Degrees -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-major-bg p-4 rounded-lg border-l-4 border-major-key">
+                    <p class="text-sm font-medium text-gray-600">คีย์สัมพัทธ์ (Relative Key)</p>
+                    <p id="relative-key" class="text-2xl font-extrabold text-major-key mt-1"></p>
+                </div>
+                <div class="bg-minor-bg p-4 rounded-lg border-l-4 border-minor-key">
+                    <p class="text-sm font-medium text-gray-600">ขั้นบันไดเสียง (Scale Degrees)</p>
+                    <p id="scale-degrees" class="text-xl font-mono text-minor-key mt-1 break-words"></p>
+                </div>
+            </div>
+
+            <!-- Chords in Key (แบ่งเป็น 3 แถวตามหน้าที่) -->
+            <h3 class="text-2xl font-semibold text-gray-700 mb-4 border-b pb-2">คอร์ดในคีย์ (Chords in Key)</h3>
+            <div class="space-y-6">
+                
+                <!-- แถวที่ 1: Tonic Function (I, vi) -->
+                <div>
+                    <p class="font-medium text-lg text-major-key mb-2">แถวที่ 1: คอร์ดฟังก์ชันโทนิก (Tonic Function)</p>
+                    <div id="chords-tonic" class="grid grid-cols-2 gap-4">
+                        <!-- คอร์ดจะถูกสร้างที่นี่ -->
+                    </div>
+                </div>
+
+                <!-- แถวที่ 2: Subdominant Function (IV, ii) -->
+                <div>
+                    <p class="font-medium text-lg text-major-key mb-2">แถวที่ 2: คอร์ดฟังก์ชันซับโดมิแนนต์ (Subdominant Function)</p>
+                    <div id="chords-subdominant" class="grid grid-cols-2 gap-4">
+                        <!-- คอร์ดจะถูกสร้างที่นี่ -->
+                    </div>
+                </div>
+
+                <!-- แถวที่ 3: Dominant Function (V, iii, vii°) -->
+                <div>
+                    <p class="font-medium text-lg text-major-key mb-2">แถวที่ 3: คอร์ดฟังก์ชันโดมิแนนต์ (Dominant Function)</p>
+                    <div id="chords-dominant" class="grid grid-cols-3 gap-4">
+                        <!-- คอร์ดจะถูกสร้างที่นี่ -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chord Progression -->
+            <h3 class="text-2xl font-semibold text-gray-700 mt-8 mb-4 border-b pb-2">คอร์ดโปรเกรสชันที่แนะนำ (Suggested Progressions)</h3>
+            <div id="chord-progressions" class="space-y-3">
+                <!-- โปรเกรสชันจะถูกสร้างที่นี่ -->
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        // ข้อมูลคีย์ทั้งหมดในวงกลมคู่ห้า (Circle of Fifths) แบบลิเนียร์
+        const ALL_KEYS = [
+            { key: "C", type: "Major", relative: "Am", chords: ["C", "Dm", "Em", "F", "G", "Am", "Bdim"], degrees: ["I", "ii", "iii", "IV", "V", "vi", "vii°"], progressions: ["I-IV-V-I", "vi-IV-I-V", "ii-V-I"] },
+            { key: "G", type: "Major", relative: "Em", chords: ["G", "Am", "Bm", "C", "D", "Em", "F#dim"], degrees: ["I", "ii", "iii", "IV", "V", "vi", "vii°"], progressions: ["I-IV-V-I", "vi-IV-I-V", "ii-V-I"] },
+            { key: "D", type: "Major", relative: "Bm", chords: ["D", "Em", "F#m", "G", "A", "Bm", "C#dim"], degrees: ["I", "ii", "iii", "IV", "V", "vi", "vii°"], progressions: ["I-IV-V-I", "vi-IV-I-V", "ii-V-I"] },
+            { key: "A", type: "Major", relative: "F#m", chords: ["A", "Bm", "C#m", "D", "E", "F#m", "G#dim"], degrees: ["I", "ii", "iii", "IV", "V", "vi", "vii°"], progressions: ["I-IV-V-I", "vi-IV-I-V", "ii-V-I"] },
+            { key: "E", type: "Major", relative: "C#m", chords: ["E", "F#m", "G#m", "A", "B", "C#m", "D#dim"], degrees: ["I", "ii", "iii", "IV", "V", "vi", "vii°"], progressions: ["I-IV-V-I", "vi-IV-I-V", "ii-V-I"] },
+            { key: "B", type: "Major", relative: "G#m", chords: ["B", "C#m", "D#m", "E", "F#", "G#m", "A#dim"], degrees: ["I", "ii", "iii", "IV", "V", "vi", "vii°"], progressions: ["I-IV-V-I", "vi-IV-I-V", "ii-V-I"] },
+            { key: "F#", type: "Major", relative: "D#m", chords: ["F#", "G#m", "A#m", "B", "C#", "D#m", "E#dim"], degrees: ["I", "ii", "iii", "IV", "V", "vi", "vii°"], progressions: ["I-IV-V-I", "vi-IV-I-V", "ii-V-I"] },
+            { key: "Db", type: "Major", relative: "Bbm", chords: ["Db", "Ebm", "Fm", "Gb", "Ab", "Bbm", "Cdim"], degrees: ["I", "ii", "iii", "IV", "V", "vi", "vii°"], progressions: ["I-IV-V-I", "vi-IV-I-V", "ii-V-I"] },
+            { key: "Ab", type: "Major", relative: "Fm", chords: ["Ab", "Bbm", "Cm", "Db", "Eb", "Fm", "Gdim"], degrees: ["I", "ii", "iii", "IV", "V", "vi", "vii°"], progressions: ["I-IV-V-I", "vi-IV-I-V", "ii-V-I"] },
+            { key: "Eb", type: "Major", relative: "Cm", chords: ["Eb", "Fm", "Gm", "Ab", "Bb", "Cm", "Ddim"], degrees: ["I", "ii", "iii", "IV", "V", "vi", "vii°"], progressions: ["I-IV-V-I", "vi-IV-I-V", "ii-V-I"] },
+            { key: "Bb", type: "Major", relative: "Gm", chords: ["Bb", "Cm", "Dm", "Eb", "F", "Gm", "Adim"], degrees: ["I", "ii", "iii", "IV", "V", "vi", "vii°"], progressions: ["I-IV-V-I", "vi-IV-I-V", "ii-V-I"] },
+            { key: "F", type: "Major", relative: "Dm", chords: ["F", "Gm", "Am", "Bb", "C", "Dm", "Edim"], degrees: ["I", "ii", "iii", "IV", "V", "vi", "vii°"], progressions: ["I-IV-V-I", "vi-IV-I-V", "ii-V-I"] },
+        ];
+
+        // ฟังก์ชันเพื่อค้นหาข้อมูลคีย์จากชื่อคีย์ (Major หรือ Minor)
+        function findKeyData(keyName) {
+            // ลองหาจาก Major Key
+            let keyData = ALL_KEYS.find(k => k.key === keyName);
+            
+            // ถ้าไม่พบ ลองหาจาก Relative Minor Key
+            if (!keyData) {
+                keyData = ALL_KEYS.find(k => k.relative === keyName);
+                
+                // ถ้าพบจาก Minor Key เราต้องสลับการแสดงผล Major/Minor
+                if (keyData) {
+                    const minorChords = getMinorChords(keyData);
+                    return {
+                        ...keyData,
+                        key: keyData.relative, // คีย์หลักที่แสดงจะเป็น Minor
+                        type: "Minor",
+                        relative: keyData.key, // Relative Key คือ Major
+                        chords: minorChords.chords,
+                        degrees: minorChords.degrees
+                    };
+                }
+            }
+            return keyData;
+        }
+
+        // ฟังก์ชันคำนวณคอร์ดและขั้นบันไดเสียงของ Minor Key
+        function getMinorChords(majorKeyData) {
+            const minorChords = [...majorKeyData.chords];
+            const minorDegrees = ["i", "ii°", "III", "iv", "v", "VI", "VII"]; // ธรรมชาติของ Minor (Natural Minor)
+            
+            // Re-order the chords for Natural Minor (starting from 6th degree of Major)
+            const rootIndex = 5; // index of vi (Am in C major)
+            const rearrangedChords = minorChords.slice(rootIndex).concat(minorChords.slice(0, rootIndex));
+            
+            // i=vi, ii°=vii°, III=I, iv=ii, v=iii, VI=IV, VII=V
+            // Chords in Minor: i, ii°, III, iv, v, VI, VII
+            // C Major: C(I) Dm(ii) Em(iii) F(IV) G(V) Am(vi) Bdim(vii°)
+            // A Minor: Am(i) Bdim(ii°) C(III) Dm(iv) Em(v) F(VI) G(VII)
+            
+            return { chords: [rearrangedChords[0], rearrangedChords[1], rearrangedChords[2], rearrangedChords[3], rearrangedChords[4], rearrangedChords[5], rearrangedChords[6]], degrees: minorDegrees };
+        }
+
+
+        // ฟังก์ชันหลักในการแสดงข้อมูล
+        function displayKeyInfo(keyName) {
+            // ล้างสถานะการเลือกของปุ่มทั้งหมด
+            document.querySelectorAll('button[data-key]').forEach(btn => {
+                btn.classList.remove('key-selected', 'ring-4', 'ring-offset-2', 'ring-accent', 'bg-opacity-100');
+                btn.classList.add('bg-opacity-80');
+            });
+
+            const data = findKeyData(keyName);
+
+            if (!data) {
+                console.error("Key data not found:", keyName);
+                return;
+            }
+
+            // ตั้งค่าปุ่มที่ถูกเลือก
+            const selectedButton = document.querySelector(`button[data-key="${keyName}"]`);
+            if (selectedButton) {
+                selectedButton.classList.add('key-selected', 'ring-4', 'ring-offset-2', 'ring-accent', 'bg-opacity-100');
+                selectedButton.classList.remove('bg-opacity-80');
+            }
+
+            // แสดงผลลัพธ์
+            const resultsArea = document.getElementById('results-area');
+            resultsArea.classList.remove('hidden');
+
+            // 1. Current Key
+            const keyTypeDisplay = data.type === "Major" ? "คีย์หลัก Major" : "คีย์รอง Minor";
+            document.getElementById('current-key-display').innerHTML = `${data.key} <span class="text-xl font-normal text-gray-500">(${keyTypeDisplay})</span>`;
+
+            // 2. Relative Key
+            const relativeType = data.type === "Major" ? "Minor" : "Major";
+            document.getElementById('relative-key').textContent = `${data.relative} (${relativeType})`;
+
+            // 3. Scale Degrees
+            document.getElementById('scale-degrees').textContent = data.degrees.join(' - ');
+
+            // 4. Chords in Key (จัดกลุ่ม 3 แถวตามฟังก์ชัน)
+            const chordData = data.chords.map((chord, index) => ({
+                chord: chord,
+                degree: data.degrees[index]
+            }));
+
+            // กำหนดการจัดกลุ่มตามฟังก์ชัน (สำหรับ Major และ Natural Minor)
+            let tonicIndexes, subdominantIndexes, dominantIndexes;
+            
+            if (data.type === "Major") {
+                // Major: I, ii, iii, IV, V, vi, vii°
+                tonicIndexes = [0, 5]; // I, vi
+                subdominantIndexes = [3, 1]; // IV, ii
+                dominantIndexes = [4, 2, 6]; // V, iii, vii°
+            } else {
+                // Minor (Natural): i, ii°, III, iv, v, VI, VII
+                tonicIndexes = [0, 2]; // i, III (Tonic Major/Minor)
+                subdominantIndexes = [3, 5]; // iv, VI
+                dominantIndexes = [4, 6, 1]; // v, VII, ii°
+            }
+
+            // ฟังก์ชันช่วยสร้าง HTML สำหรับคอร์ด
+            const renderChords = (indexes, containerId) => {
+                const container = document.getElementById(containerId);
+                container.innerHTML = ''; // Clear previous content
+                
+                indexes.forEach(i => {
+                    if (i < chordData.length) {
+                        const item = chordData[i];
+                        const div = document.createElement('div');
+                        div.className = "bg-gray-50 p-3 rounded-md shadow-sm border border-gray-200";
+                        div.innerHTML = `
+                            <p class="text-xs font-mono text-gray-500">${item.degree}</p>
+                            <p class="text-xl font-bold ${data.type === "Major" ? 'text-major-key' : 'text-minor-key'}">${item.chord}</p>
+                        `;
+                        container.appendChild(div);
+                    }
+                });
+            };
+
+            renderChords(tonicIndexes, 'chords-tonic');
+            renderChords(subdominantIndexes, 'chords-subdominant');
+            renderChords(dominantIndexes, 'chords-dominant');
+
+
+            // 5. Chord Progressions
+            const progressionContainer = document.getElementById('chord-progressions');
+            progressionContainer.innerHTML = '';
+            
+            // ใช้คอร์ด Major หรือ Minor ตามคีย์ที่เลือก
+            const usedProgressions = data.progressions.map(p => {
+                const parts = p.split('-');
+                let translatedProgression = parts.map(degree => {
+                    const index = data.degrees.indexOf(degree.trim());
+                    return index !== -1 ? `${degree} (${data.chords[index]})` : degree;
+                }).join(' <span class="font-bold text-lg text-gray-500">→</span> ');
+                
+                return translatedProgression;
+            });
+            
+            usedProgressions.forEach(prog => {
+                const p = document.createElement('p');
+                p.className = "p-3 bg-gray-50 rounded-lg shadow-inner text-gray-700 font-semibold border border-gray-200";
+                p.innerHTML = prog;
+                progressionContainer.appendChild(p);
+            });
+        }
+
+        // ฟังก์ชันสำหรับสร้างปุ่มคีย์
+        function createKeyButtons() {
+            const majorContainer = document.getElementById('major-keys-container');
+            const minorContainer = document.getElementById('minor-keys-container');
+
+            ALL_KEYS.forEach(keyData => {
+                // ปุ่ม Major Key
+                const majorBtn = document.createElement('button');
+                majorBtn.textContent = keyData.key;
+                majorBtn.className = 'key-btn text-lg font-bold py-2 px-4 rounded-lg transition transform duration-200 shadow-md bg-major-key text-white hover:bg-major-key-700 bg-opacity-80';
+                majorBtn.dataset.key = keyData.key;
+                majorBtn.onclick = () => displayKeyInfo(keyData.key);
+                majorContainer.appendChild(majorBtn);
+
+                // ปุ่ม Relative Minor Key
+                const minorBtn = document.createElement('button');
+                minorBtn.textContent = keyData.relative;
+                minorBtn.className = 'key-btn text-lg font-bold py-2 px-4 rounded-lg transition transform duration-200 shadow-md bg-minor-key text-white hover:bg-minor-key-700 bg-opacity-80';
+                minorBtn.dataset.key = keyData.relative;
+                minorBtn.onclick = () => displayKeyInfo(keyData.relative);
+                minorContainer.appendChild(minorBtn);
+            });
+        }
+
+        // เริ่มต้นการทำงานเมื่อโหลดหน้าเว็บ
+        window.onload = function() {
+            createKeyButtons();
+            // เลือก C Major เป็นค่าเริ่มต้น
+            displayKeyInfo('C'); 
+        };
+    </script>
+</body>
+</html>
