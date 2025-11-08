@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circle of Fifths - Interactive Music Theory Tool</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- ==================== CSS ==================== -->
+    <style>
+        /* --- CSS Variables for Theming --- */
+        :root {
+            --bg-color: #1a1a2e;
+            --panel-bg: #16213e;
+            --text-color: #e6e6e6;
+            --border-color: #0f3460;
+            --header-bg: rgba(26, 26, 46, 0.9);
+            --active-shadow: 0 0 15px rgba(241, 196, 15, 0.7);
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+            /* Key Colors */
+            --primary-color-major: #f39c12;
+            --secondary-color-major: #e67e22;
+            --text-color-major: #2c3e50;
+            --primary-color-minor: #3498db;
+            --secondary-color-minor: #2980b9;
+            --text-color-minor: #ecf0f1;
+            
+            /* Chord Colors */
+            --chord-major-primary-bg: #f1c40f;
+            --chord-major-primary-text: #2c3e50;
+            --chord-major-secondary-bg: #d68910;
+            --chord-major-diminished-bg: #935116;
+            --chord-minor-primary-bg: #3498db;
+            --chord-minor-secondary-bg: #85c1e9;
+            --chord-minor-secondary-text: #1a252f;
+            --chord-minor-diminished-bg: #1b4f72;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--bg-color) 0%, #0f3460 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            background-color: var(--header-bg);
+            padding: 30px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            box-shadow: var(--card-shadow);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #f1c40f;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            color: #b8c2cc;
+        }
+
+        /* Circle of Fifths Section */
+        #circle-of-fifths {
+            margin-bottom: 40px;
+            background-color: var(--panel-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .key-row h3 {
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-align: center;
+            color: #f1c40f;
+            font-size: 1.3rem;
+        }
+
+        .keys-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .key-button {
+            padding: 14px 22px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            /* A gradient to represent both major and minor */
+            background: linear-gradient(90deg, var(--primary-color-major) 50%, var(--primary-color-minor) 50%);
+            color: var(--text-color-major);
+            border-left-color: var(--secondary-color-major);
+            border-right-color: var(--secondary-color-minor);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .key-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            background: linear-gradient(90deg, var(--secondary-color-major) 50%, var(--secondary-color-minor) 50%);
+        }
+
+        .key-button.active {
+            background: linear-gradient(90deg, #f1c40f 50%, #f1c40f 50%);
+            color: var(--bg-color);
+            border-color: #f1c40f;
+            transform: scale(1.05);
+            box-shadow: var(--active-shadow);
+        }
+
+        /* Display Panel */
+        #display-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .info-card {
+            background-color: var(--panel-bg);
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s ease;
+        }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .info-card h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #f1c40f;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        /* Chords in Key - Separated Display */
+        .chord-mode-container {
+            margin-bottom: 20px;
+            padding: 18px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .chord-mode-container h3 {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            color: var(--text-color);
+        }
+
+        .chord-row {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .chord-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .chord-box {
+            padding: 10px 14px;
+            background-color: #555;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            min-width: 60px;
+            text-align: center;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .chord-box:hover {
+            transform: scale(1.05);
+        }
+        
+        .chord-name {
+            font-size: 1rem;
+        }
+        
+        .degree-label {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            margin-top: 4px;
+        }
+
+        /* --- MAJOR KEY THEME --- */
+        .theme-major .chord-primary { 
+            background-color: var(--chord-major-primary-bg); 
+            color: var(--chord-major-primary-text); 
+        }
+        
+        .theme-major .chord-secondary { 
+            background-color: var(--chord-major-secondary-bg); 
+            color: white;
+        }
+        
+        .theme-major .chord-diminished { 
+            background-color: var(--chord-major-diminished-bg); 
+            color: white;
+        }
+
+        /* --- MINOR KEY THEME --- */
+        .theme-minor .chord-primary { 
+            background-color: var(--chord-minor-primary-bg); 
+            color: white;
+        }
+        
+        .theme-minor .chord-secondary { 
+            background-color: var(--chord-minor-secondary-bg); 
+            color: var(--chord-minor-secondary-text); 
+        }
+        
+        .theme-minor .chord-diminished { 
+            background-color: var(--chord-minor-diminished-bg); 
+            color: white;
+        }
+
+        /* Progressions */
+        #progressions-display {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        
+        #progressions-display li {
+            background: rgba(0,0,0,0.1);
+            padding: 18px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #f1c40f;
+            transition: background 0.3s ease;
+        }
+        
+        #progressions-display li:hover {
+            background: rgba(0,0,0,0.15);
+        }
+        
+        .emotion-header {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #f1c40f;
+            margin-bottom: 12px;
+        }
+        
+        .progression-group {
+            margin-bottom: 10px;
+        }
+        
+        .progression-group strong {
+            color: var(--text-color);
+            font-size: 0.95rem;
+        }
+        
+        .progression-chords {
+            font-size: 0.9rem;
+            color: #b8c2cc;
+        }
+        
+        /* Color classes for numerals in progressions */
+        .prog-numeral-major { color: var(--chord-major-primary-bg); }
+        .prog-numeral-minor { color: var(--chord-minor-primary-bg); }
+        .prog-numeral-diminished { color: var(--chord-major-diminished-bg); }
+
+        /* NEW: Chord Families Card */
+        #families-display {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        
+        .family-section {
+            padding: 18px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: rgba(0,0,0,0.05);
+            transition: background 0.3s ease;
+        }
+        
+        .family-section:hover {
+            background: rgba(0,0,0,0.08);
+        }
+        
+        .family-section h4 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #f1c40f;
+            margin-bottom: 8px;
+        }
+        
+        .family-section p {
+            font-size: 0.9rem;
+            color: #b8c2cc;
+            margin-bottom: 12px;
+        }
+        
+        .family-chords-grid {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+            color: #b8c2cc;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+            
+            .keys-container {
+                gap: 8px;
+            }
+            
+            .key-button {
+                padding: 12px 16px;
+                font-size: 0.9rem;
+            }
+            
+            #display-panel {
+                grid-template-columns: 1fr;
+            }
+            
+            .chord-row {
+                flex-wrap: wrap;
+            }
+            
+            .family-chords-grid {
+                justify-content: flex-start;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            header {
+                padding: 20px;
+            }
+            
+            .info-card {
+                padding: 18px;
+            }
+            
+            .chord-mode-container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Circle of Fifths Plus</h1>
+            <p>Interactive Music Theory Tool - เลือกคีย์เพื่อดูข้อมูลที่เกี่ยวข้องทั้งหมด</p>
+        </header>
+
+        <main>
+            <section id="circle-of-fifths">
+                <div class="key-row">
+                    <h3>Key Signatures</h3>
+                    <div class="keys-container">
+                        <!-- Keys will be generated by JS -->
+                    </div>
+                </div>
+            </section>
+
+            <section id="display-panel">
+                <div class="info-card">
+                    <h2>Chords in Key</h2>
+                    <div id="chords-in-key-display">
+                        <div class="chord-mode-container theme-major" id="chords-major-display">
+                            <h3>Major</h3>
+                            <div class="chord-row" id="major-primary-chords"></div>
+                            <div class="chord-row" id="major-secondary-chords"></div>
+                            <div class="chord-row" id="major-diminished-chord"></div>
+                        </div>
+                        <div class="chord-mode-container theme-minor" id="chords-minor-display">
+                            <h3>Minor</h3>
+                            <div class="chord-row" id="minor-primary-chords"></div>
+                            <div class="chord-row" id="minor-secondary-chords"></div>
+                            <div class="chord-row" id="minor-diminished-chord"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NEW: Chord Families Card -->
+                <div class="info-card">
+                    <h2>Chord Families</h2>
+                    <p style="font-size:0.9rem; color: #b8c2cc; margin-bottom: 15px;">กลุ่มของคอร์ดที่มีหน้าที่และความรู้สึกที่แตกต่างกัน</p>
+                    <div id="families-display">
+                        <!-- Families will be generated by JS -->
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <h2>Chord Progressions</h2>
+                    <p style="font-size:0.9rem; color: #b8c2cc; margin-bottom: 10px;">(Classified by Emotion & Intensity)</p>
+                    <ul id="progressions-display">
+                        <li>เลือกคีย์ก่อน</li>
+                    </ul>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>Circle of Fifths Interactive Tool - Created for Music Theory Learning</p>
+        </footer>
+    </div>
+
+    <!-- ==================== JAVASCRIPT ==================== -->
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // --- DATA ---
+        const circleOfFifths = [
+            { major: 'C', minor: 'Am', signature: '' },
+            { major: 'G', minor: 'Em', signature: '1#' },
+            { major: 'D', minor: 'Bm', signature: '2#' },
+            { major: 'A', minor: 'F#m', signature: '3#' },
+            { major: 'E', minor: 'C#m', signature: '4#' },
+            { major: 'B', minor: 'G#m', signature: '5#' },
+            { major: 'F#', minor: 'D#m', signature: '6#' },
+            { major: 'Db', minor: 'Bbm', signature: '5b' },
+            { major: 'Ab', minor: 'Fm', signature: '4b' },
+            { major: 'Eb', minor: 'Cm', signature: '3b' },
+            { major: 'Bb', minor: 'Gm', signature: '2b' },
+            { major: 'F', minor: 'Dm', signature: '1b' },
+        ];
+
+        const chromaticScaleSharps = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        const chromaticScaleFlats = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+        
+        // เปลี่ยนคุณภาพคอร์ดให้สั้นลง
+        const majorChordQualities = ['', 'm', 'm', '', '', 'm', 'dim'];
+        const minorChordQualities = ['m', 'dim', '', 'm', 'm', '', ''];
+        
+        // NEW: Data for Chord Families
+        const chordFamiliesData = [
+            {
+                name: 'Tonic Family (กลุ่มโทนิก)',
+                description: 'ให้ความรู้สึกมั่นคง เหมือน "บ้าน"',
+                majorNumerals: ['I', 'iii', 'vi'],
+                minorNumerals: ['i', 'III', 'VI']
+            },
+            {
+                name: 'Subdominant Family (กลุ่มซับโดมิแนนท์)',
+                description: 'สร้างความรู้สึกเคลื่อนไหวออกจาก "บ้าน" อย่างนุ่มนวล',
+                majorNumerals: ['IV', 'ii'],
+                minorNumerals: ['iv', 'ii°']
+            },
+            {
+                name: 'Dominant Family (กลุ่มโดมิแนนท์)',
+                description: 'สร้างความตึงเครียดและดึงดูดใจให้กลับไปสู่ "บ้าน"',
+                majorNumerals: ['V', 'vii°'],
+                minorNumerals: ['V', 'VII']
+            }
+        ];
+
+        const emotionalProgressions = [
+            { emotion: 'Happy', intensity: 'High', major: ['I - IV - V', 'I - V - vi - IV'], minor: ['i - III - VII - VI (with major V)'] },
+            { emotion: 'Sad', intensity: 'High', major: ['vi - IV - I - V'], minor: ['i - VI - III - VII', 'i - v - VI - VII'] },
+            { emotion: 'Epic', intensity: 'Very High', major: ['I - IV - vi - V'], minor: ['i - VII - VI - V', 'i - VI - III - VII'] },
+            { emotion: 'Jazz/Sophisticated', intensity: 'Medium', major: ['ii - V - I', 'I - vi - ii - V'], minor: ['i - iv - VII with extensions'] },
+            { emotion: 'Relaxed', intensity: 'Low', major: ['I - iii - IV - V'], minor: ['i - VII - iv - III'] },
+            { emotion: 'Tense', intensity: 'High', major: ['I - V - vi - iii (unresolved)'], minor: ['i - V - i (classical)'] }
+        ];
+
+        const scaleDegreeNames = ['I (Tonic)', 'ii (Supertonic)', 'iii (Mediant)', 'IV (Subdominant)', 'V (Dominant)', 'vi (Submediant)', 'vii° (Leading Tone)'];
+        const scaleDegreeNamesMinor = ['i (Tonic)', 'ii° (Supertonic)', 'III (Mediant)', 'iv (Subdominant)', 'v (Dominant)', 'VI (Submediant)', 'VII (Subtonic)'];
+
+        // --- DOM ELEMENTS ---
+        const keysContainer = document.querySelector('.keys-container');
+        const majorPrimaryChordsDisplay = document.getElementById('major-primary-chords');
+        const majorSecondaryChordsDisplay = document.getElementById('major-secondary-chords');
+        const majorDiminishedChordDisplay = document.getElementById('major-diminished-chord');
+        const minorPrimaryChordsDisplay = document.getElementById('minor-primary-chords');
+        const minorSecondaryChordsDisplay = document.getElementById('minor-secondary-chords');
+        const minorDiminishedChordDisplay = document.getElementById('minor-diminished-chord');
+        const progressionsDisplay = document.getElementById('progressions-display');
+        const familiesDisplay = document.getElementById('families-display'); // NEW
+
+        // --- INITIALIZATION ---
+        function initializeApp() {
+            createKeyButtons();
+            document.getElementById('circle-of-fifths').addEventListener('click', handleKeyClick);
+        }
+
+        // --- CORE FUNCTIONS ---
+        function createKeyButtons() {
+            circleOfFifths.forEach(keyData => {
+                const btn = document.createElement('button');
+                btn.classList.add('key-button');
+                btn.textContent = `${keyData.major} / ${keyData.minor}`;
+                btn.dataset.key = `${keyData.major}/${keyData.minor}`;
+                keysContainer.appendChild(btn);
+            });
+        }
+
+        function handleKeyClick(event) {
+            if (event.target.classList.contains('key-button')) {
+                const selectedKeyPair = event.target.dataset.key;
+                document.querySelectorAll('.key-button').forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+                updateDisplay(selectedKeyPair);
+            }
+        }
+
+        function updateDisplay(keyPair) {
+            const [majorKey, minorKey] = keyPair.split('/');
+            const keyData = findKeyData(majorKey);
+            if (!keyData) return;
+
+            const majorChords = generateChordsInKey(generateScale(majorKey, true), true);
+            const minorRootNote = minorKey.replace('m', '');
+            const minorChords = generateChordsInKey(generateScale(minorRootNote, false), false);
+            
+            displaySeparatedChords(majorChords, minorChords);
+            displayChordFamilies(majorChords, minorChords); // NEW
+
+            const progressions = generateEmotionalProgressions(majorChords, minorChords);
+            displayEmotionalProgressions(progressions, majorChords, minorChords);
+        }
+
+        function displaySeparatedChords(majorChords, minorChords) {
+            [majorPrimaryChordsDisplay, majorSecondaryChordsDisplay, majorDiminishedChordDisplay,
+             minorPrimaryChordsDisplay, minorSecondaryChordsDisplay, minorDiminishedChordDisplay].forEach(el => el.innerHTML = '');
+
+            majorChords.forEach((chord, index) => {
+                const chordBox = createChordBox(chord, scaleDegreeNames[index]);
+                if (index === 0 || index === 3 || index === 4) majorPrimaryChordsDisplay.appendChild(chordBox);
+                else if (index === 6) majorDiminishedChordDisplay.appendChild(chordBox);
+                else majorSecondaryChordsDisplay.appendChild(chordBox);
+            });
+
+            minorChords.forEach((chord, index) => {
+                const chordBox = createChordBox(chord, scaleDegreeNamesMinor[index]);
+                if (index === 0 || index === 3 || index === 4) minorPrimaryChordsDisplay.appendChild(chordBox);
+                else if (index === 6) minorDiminishedChordDisplay.appendChild(chordBox);
+                else minorSecondaryChordsDisplay.appendChild(chordBox);
+            });
+        }
+
+        // NEW: Function to display Chord Families
+        function displayChordFamilies(majorChords, minorChords) {
+            familiesDisplay.innerHTML = ''; // Clear previous content
+
+            chordFamiliesData.forEach(family => {
+                const section = document.createElement('div');
+                section.classList.add('family-section');
+
+                const title = document.createElement('h4');
+                title.textContent = family.name;
+                section.appendChild(title);
+
+                const desc = document.createElement('p');
+                desc.textContent = family.description;
+                section.appendChild(desc);
+
+                const grid = document.createElement('div');
+                grid.classList.add('family-chords-grid');
+
+                // Add Major Chords
+                family.majorNumerals.forEach(numeral => {
+                    const chord = majorChords.find(c => c.roman === numeral);
+                    if (chord) {
+                        grid.appendChild(createFamilyChordBox(chord));
+                    }
+                });
+
+                // Add Minor Chords
+                family.minorNumerals.forEach(numeral => {
+                    const chord = minorChords.find(c => c.roman === numeral);
+                    if (chord) {
+                        grid.appendChild(createFamilyChordBox(chord));
+                    }
+                });
+
+                section.appendChild(grid);
+                familiesDisplay.appendChild(section);
+            });
+        }
+        
+        // NEW: Helper function to create a chord box for the family card
+        function createFamilyChordBox(chord) {
+            const chordBox = document.createElement('div');
+            chordBox.classList.add('chord-box');
+            
+            let functionClass = '';
+            if (chord.roman === 'I' || chord.roman === 'IV' || chord.roman === 'V' || chord.roman === 'i' || chord.roman === 'iv' || chord.roman === 'v') {
+                functionClass = 'chord-primary';
+            } else if (chord.roman === 'vii°' || chord.roman === 'ii°') {
+                functionClass = 'chord-diminished';
+            } else {
+                functionClass = 'chord-secondary';
+            }
+            
+            chordBox.classList.add(functionClass);
+            
+            // แสดงชื่อคอร์ดในรูปแบบสั้น (เช่น C, Cm, Cdim)
+            const chordName = chord.quality ? `${chord.note}${chord.quality}` : chord.note;
+            chordBox.textContent = chordName;
+            return chordBox;
+        }
+
+        function createChordBox(chord, degreeName) {
+            const chordBox = document.createElement('div');
+            chordBox.classList.add('chord-box');
+            
+            let functionClass = '';
+            if (chord.roman === 'I' || chord.roman === 'IV' || chord.roman === 'V' || chord.roman === 'i' || chord.roman === 'iv' || chord.roman === 'v') {
+                functionClass = 'chord-primary';
+            } else if (chord.roman === 'vii°' || chord.roman === 'ii°') {
+                functionClass = 'chord-diminished';
+            } else {
+                functionClass = 'chord-secondary';
+            }
+            
+            chordBox.classList.add(functionClass);
+            
+            // แสดงชื่อคอร์ดในรูปแบบสั้น (เช่น C, Cm, Cdim)
+            const chordName = chord.quality ? `${chord.note}${chord.quality}` : chord.note;
+            chordBox.innerHTML = `<div class="chord-name">${chordName}</div><div class="degree-label">${degreeName}</div>`;
+            return chordBox;
+        }
+
+        function findKeyData(keyString) {
+            const keyName = keyString.split(' ')[0];
+            return circleOfFifths.find(k => k.major === keyName || k.minor === keyName);
+        }
+
+        function generateScale(root, isMajor) {
+            const keyData = findKeyData(`${root} ${isMajor ? 'Major' : 'Minor'}`);
+            const useFlats = keyData && keyData.signature.includes('b');
+            const chromaticScale = useFlats ? chromaticScaleFlats : chromaticScaleSharps;
+            const intervals = isMajor ? [0, 2, 4, 5, 7, 9, 11] : [0, 2, 3, 5, 7, 8, 10];
+            const rootIndex = chromaticScale.indexOf(root);
+            if (rootIndex === -1) return []; // Should not happen with our data
+            const scale = [];
+            intervals.forEach(interval => {
+                const noteIndex = (rootIndex + interval) % 12;
+                scale.push(chromaticScale[noteIndex]);
+            });
+            return scale;
+        }
+
+        function generateChordsInKey(scale, isMajor) {
+            const qualities = isMajor ? majorChordQualities : minorChordQualities;
+            return scale.map((note, index) => {
+                const romanNumeral = isMajor ? ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°'][index] : ['i', 'ii°', 'III', 'iv', 'v', 'VI', 'VII'][index];
+                return { note, quality: qualities[index], roman: romanNumeral };
+            });
+        }
+
+        function formatProgression(numeralsString, chords) {
+            const resolvedChords = resolveProgressionString(numeralsString, chords);
+            return `${numeralsString} <span class="progression-chords">(${resolvedChords})</span>`;
+        }
+
+        function resolveProgressionString(numeralsString, chords) {
+            return numeralsString.split(' - ').map(numeral => {
+                const chord = chords.find(c => c.roman === numeral);
+                if (chord) {
+                    // แสดงชื่อคอร์ดในรูปแบบสั้น (เช่น C, Cm, Cdim)
+                    return chord.quality ? `${chord.note}${chord.quality}` : chord.note;
+                }
+                return numeral;
+            }).join(' - ');
+        }
+        
+        function generateEmotionalProgressions(majorChords, minorChords) {
+            return emotionalProgressions;
+        }
+
+        function displayEmotionalProgressions(progressions, majorChords, minorChords) {
+            progressionsDisplay.innerHTML = '';
+            progressions.forEach(prog => {
+                const li = document.createElement('li');
+                
+                let html = `<div class="emotion-header">${prog.emotion} (${prog.intensity} Intensity)</div>`;
+                
+                if (prog.major.length > 0) {
+                    prog.major.forEach(pString => {
+                        html += `<div class="progression-group"><strong>Major:</strong> ${formatProgression(pString, majorChords)}</div>`;
+                    });
+                }
+                if (prog.minor.length > 0) {
+                    prog.minor.forEach(pString => {
+                        html += `<div class="progression-group"><strong>Minor:</strong> ${formatProgression(pString, minorChords)}</div>`;
+                    });
+                }
+                
+                li.innerHTML = html;
+                progressionsDisplay.appendChild(li);
+            });
+        }
+
+        // --- START THE APP ---
+        initializeApp();
+    });
+    </script>
+</body>
+</html>
